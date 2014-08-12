@@ -1,4 +1,4 @@
 User-agent: *
 Disallow: 
 
-Sitemap: http://KIRAlzn.github.io/sitemap.xml 
+Sitemap: KIRAlzn/sitemap.xml 

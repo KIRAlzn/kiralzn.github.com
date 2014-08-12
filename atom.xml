@@ -1,16 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
 
-  <title><![CDATA[My Octopress Blog]]></title>
-  <link href="http://KIRAlzn.github.io/atom.xml" rel="self"/>
-  <link href="http://KIRAlzn.github.io/"/>
-  <updated>2014-08-12T23:35:47+08:00</updated>
-  <id>http://KIRAlzn.github.io/</id>
+  <title><![CDATA[KIRAlzn夜神丶月]]></title>
+  <link href="KIRAlzn/atom.xml" rel="self"/>
+  <link href="KIRAlzn/"/>
+  <updated>2014-08-12T23:41:59+08:00</updated>
+  <id>KIRAlzn/</id>
   <author>
-    <name><![CDATA[Your Name]]></name>
-    
+    <name><![CDATA[KIRAlzn]]></name>
+    <email><![CDATA[443681952@qq.com]]></email>
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[test Mou]]></title>
+    <link href="KIRAlzn/blog/2014/08/12/test-mou/"/>
+    <updated>2014-08-12T23:40:52+08:00</updated>
+    <id>KIRAlzn/blog/2014/08/12/test-mou</id>
+    <content type="html"><![CDATA[<h1>test</h1>
+
+<p><img src="KIRAlzn/Users/luqingyu/Desktop/kami.png" alt="" /></p>
+
+<h2>subtitle</h2>
+
+<p><strong>highlight</strong>, test for</p>
+
+<h3>threesmall</h3>
+
+<p><em>slide</em>,&hellip;.</p>
+
+<p><em>ad沙发上发生飞萨芬是飞萨芬萨芬撒飞</em></p>
+
+<h2>Links and Email</h2>
+
+<p>An email <a href="&#109;&#97;&#x69;&#x6c;&#116;&#111;&#58;&#x34;&#52;&#51;&#54;&#56;&#49;&#57;&#53;&#x32;&#x40;&#113;&#x71;&#x2e;&#99;&#111;&#x6d;">&#52;&#52;&#x33;&#54;&#56;&#49;&#x39;&#x35;&#50;&#64;&#x71;&#x71;&#46;&#x63;&#111;&#x6d;</a> link.</p>
+]]></content>
+  </entry>
   
 </feed>
