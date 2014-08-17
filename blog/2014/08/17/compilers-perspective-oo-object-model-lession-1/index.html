@@ -1,17 +1,19 @@
+<h2>compiler&rsquo;s perspective:</h2>
+
 <h2>玩转oo对象模型(1) 之 初窥c++对象模型</h2>
 
 <hr />
 
-<p><strong>copyright: KIRAlzn
-自我介绍: USTC研一学生，目前在intel pccg department实习，研发岗</strong></p>
+<p><strong>copyright: KIRAlzn</strong>
+<strong>自我介绍: USTC研一学生，目前在intel pccg department实习，研发岗</strong></p>
 
 <hr />
 
 <p>第二篇来了，这次篇幅不能那么长了，得简短一点了，xixi。<strong>说好的oo对象模型，我一定能讲清楚，很久以前自己就已经写过至少5篇关于object model的文章</strong>，只是自己写着玩的，自己保存用的，怕以后忘记了，这次既然要发文章，就好好把以前的东西有条理的整理下。</p>
 
-<blockquote><p><strong>1.本人读过inside the c++ object model ,  effective c++ , more effective c++ , c++沉思录，c++ primer 等书
-2.编译器写过 minijava -> c 的代码生成
-3.研究过信息安全相关 所以深知c++对象模型的机理，才敢操刀 oo对象模型的相关文章。</strong></p></blockquote>
+<blockquote><p><strong>1.本人读过inside the c++ object model ,  effective c++ , more effective c++ , c++沉思录，c++ primer 等书</strong>
+<strong>2.编译器写过 minijava -> c 的代码生成,用prefix算法设计过java->c的对象模型存储，包括最难的minijava->x86的直接生成，意味用最低级的x86去直接模拟高度封装的java</strong>
+<strong>3.研究过信息安全相关 所以深知c++对象模型的机理，才敢操刀 oo对象模型的相关文章。</strong></p></blockquote>
 
 <p>首先还是用我自己的话给 object model 下一个定义:</p>
 
@@ -21,7 +23,9 @@
 
 <p>先看一段我认为入门最好的，最有趣的小程序，可能有点毁三观(第一反应:这tm也行?怎么做到的？，高手飘过，谢谢)，不过没关系，这可以充分展示对象模型。</p>
 
-<p>请欣赏：深入理解oo对象模型4部曲</p>
+<p><strong>请欣赏：深入理解oo对象模型4部曲</strong></p>
+
+<hr />
 
 <h3>1.第一部</h3>
 
@@ -74,6 +78,8 @@
 
 <p>好吧，第一个程序如果还是不过瘾，请欣赏第二个程序。</p>
 
+<hr />
+
 <h3>2.第二部</h3>
 
 <pre><code>#include &lt;iostream&gt;
@@ -115,6 +121,8 @@ int main()
 <hr />
 
 <p>ok,如果还不过瘾，我再敲一个，更毁三观的程序，可以叫它   ->   hook虚函数表 , 不行，这样叫不准确，就叫他 object hook 吧，其实就hook了一个函数指针而已。</p>
+
+<hr />
 
 <h3>3.第三部</h3>
 
@@ -161,7 +169,9 @@ return 0;
 
 <p>如果改了之后，bp->f();输出什么，应该很明了了。</p>
 
-<h3>4.第四毁，来了，不像3一样，4是可以直接跑的，所以说，c++对象模型中。。vptr的设计。。。 -> hook 整张虚函数表</h3>
+<hr />
+
+<h3>4.第四部，来了，不像3一样，4是可以直接跑的，所以说，c++对象模型中。。vptr的设计。。。 -> hook 整张虚函数表</h3>
 
 <p>windows下cl.exe编译 ， linux 下 g++ 编译均可以。</p>
 

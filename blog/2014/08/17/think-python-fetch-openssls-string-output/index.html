@@ -1,0 +1,215 @@
+<h2>think python:fetch openssl&rsquo;s string output</h2>
+
+<hr />
+
+<p><strong>copyright: KIRAlzn</strong>
+<strong>自我介绍: USTC研一学生，目前在intel pccg department实习，研发岗</strong></p>
+
+<hr />
+
+<p>老大说无线充电中ptu和pru通信的固件不安全，所以要加上RSA加密，但是有以下不好办的地方：</p>
+
+<hr />
+
+<p><strong>1.由于公钥和私钥都是很长，比如512，1024，1280，1536，2048等等，这么长的数据是不能放到long等辈之中的，得考虑类似unsigned char(byte)数组，大整数乘方仍然是加密算法的难点之一
+2.openssl命令输出返回整个字符串，里面有各式各样的数据，不要好fetch出你想要的，而且随着RSA长度的递增，公钥和私钥输出不止一行(每行15个byte)，当然可以根据长度计算，但是很麻烦不是吗？
+3.openssl命令输出的公钥和私钥，第一个(little ending) byte，比如 0xab , openssl就会自动多加上一个 0x00 去间隔，所以整个密钥有的时候会多出一个？怎么处理？
+4.最蛋疼的是openssl输出的字节序 和 RSA处理的字节序是反的，得反转，怎么破？首先openssl输出的每个字节是不带0x的，而且是逆序，手动去处理会疯掉的</strong></p>
+
+<hr />
+
+<p>ok，这些问题也不是什么难事，用脚本语言可以很简单的解决，要不然脚本语言就没有存储在的必要了。
+最后附录上全部30几行代码，可以直接使用哦，以后用openssl取非常大的公钥和私钥再也不要手动咯~~~</p>
+
+<hr />
+
+<p>为什么不手动去处理，看下openssl的输出就秒懂了&hellip;&hellip;&hellip;</p>
+
+<p><strong>C:\Users\lzn\Desktop>python try.py 512</strong>   这个是我写的try.py，512是RSA长度，命令行参数</p>
+
+<p>Private-Key: (512 bit)
+modulus:
+    00:be:30:36:c1:63:35:a2:02:dd:f8:83:86:f5:e4:
+    ef:a2:75:9f:02:56:94:ba:a5:dc:76:59:1b:b6:4c:
+    3e:80:1b:10:c0:c6:d4:8f:0d:85:1c:81:25:21:5d:
+    19:56:bd:f3:74:17:a4:5e:80:50:11:cb:2d:7d:ab:
+    73:8b:44:26:37
+publicExponent: 65537 (0x10001)
+privateExponent:
+    00:a9:7f:fe:cc:cb:c6:78:e5:65:3e:9e:ba:21:5c:
+    2f:d5:f2:4e:0c:9f:6d:5e:0b:84:38:55:a2:45:0e:
+    1e:85:bc:0d:d8:17:ab:17:8a:8e:e9:57:1d:91:ce:
+    3b:39:0e:4b:1f:6d:a6:e4:1c:7d:2d:a9:d1:ec:46:
+    87:11:bc:e3:c1
+prime1:
+    00:f5:9e:94:d3:2c:f8:05:ac:f6:93:22:df:e3:63:
+    0a:d7:7f:e8:bd:b8:59:bd:81:9b:75:17:48:48:c1:
+    50:54:33
+prime2:
+    00:c6:39:e8:c7:49:3b:ef:33:a0:47:8c:c2:ca:46:
+    44:9a:ed:f0:3f:e0:de:17:18:33:ee:05:4b:46:2c:
+    26:01:ed
+exponent1:
+    00:b0:c3:d0:fd:6d:a6:8d:87:1d:e9:64:36:d6:91:
+    87:d2:f1:75:d1:5b:e4:11:b3:3d:ea:f5:b7:8a:cc:
+    bc:ff:eb
+exponent2:
+    29:df:89:c0:af:43:ad:df:e5:f7:b7:50:5e:92:41:
+    63:c8:e7:7b:56:f1:13:47:d5:90:6e:25:dc:88:ee:
+    ee:71
+coefficient:
+    24:a6:f6:eb:d8:ce:5b:80:9d:ac:09:10:7b:b9:ad:
+    65:98:1c:29:ac:3f:ee:9b:6f:76:c3:e7:7a:02:a6:
+    fa:a1
+<strong>//上面是openssl输出的字符串</strong>
+<strong>//下面是经过我处理后的结果，可以直接粘贴到RSA算法里面，省去了不少时间</strong>
+modulus:
+0x37,0x26,0x44,0x8b,0x73,0xab,0x7d,0x2d,0xcb,0x11,0x50,0x80,0x5e,0xa4,0x17,0x74,
+0xf3,0xbd,0x56,0x19,0x5d,0x21,0x25,0x81,0x1c,0x85,0x0d,0x8f,0xd4,0xc6,0xc0,0x10,
+0x1b,0x80,0x3e,0x4c,0xb6,0x1b,0x59,0x76,0xdc,0xa5,0xba,0x94,0x56,0x02,0x9f,0x75,
+0xa2,0xef,0xe4,0xf5,0x86,0x83,0xf8,0xdd,0x02,0xa2,0x35,0x63,0xc1,0x36,0x30,0xbe,</p>
+
+<p>privateExponent:
+0xc1,0xe3,0xbc,0x11,0x87,0x46,0xec,0xd1,0xa9,0x2d,0x7d,0x1c,0xe4,0xa6,0x6d,0x1f,
+0x4b,0x0e,0x39,0x3b,0xce,0x91,0x1d,0x57,0xe9,0x8e,0x8a,0x17,0xab,0x17,0xd8,0x0d,
+0xbc,0x85,0x1e,0x0e,0x45,0xa2,0x55,0x38,0x84,0x0b,0x5e,0x6d,0x9f,0x0c,0x4e,0xf2,
+0xd5,0x2f,0x5c,0x21,0xba,0x9e,0x3e,0x65,0xe5,0x78,0xc6,0xcb,0xcc,0xfe,0x7f,0xa9,</p>
+
+<p><strong>处理完之后，可以直接生成任意长度的公钥和私钥，然后直接粘贴到byte数组里面，感觉省去了非常多繁琐的工作量，可以让计算机去做的为啥不让计算机去做呐？</strong></p>
+
+<hr />
+
+<p><strong>当然，短短的30几行python我就搞定了，how to think python ？</strong></p>
+
+<hr />
+
+<p>考虑:
+1.考虑如下片段，如果要取出中间这东东，难点我上面已经总结了。
+a. 粗体00是多出来的，因为little ending结尾是字母
+b. 输出有很多行，如果是一行一行的fetch，虽然行数是能够算出来的，但是还是要拼接，非常麻烦
+c. 反转所有字节序
+d. &hellip;&hellip;
+<strong>modulus:</strong>
+    <strong>00</strong>:be:30:36:c1:63:35:a2:02:dd:f8:83:86:f5:e4:
+    ef:a2:75:9f:02:56:94:ba:a5:dc:76:59:1b:b6:4c:
+    3e:80:1b:10:c0:c6:d4:8f:0d:85:1c:81:25:21:5d:
+    19:56:bd:f3:74:17:a4:5e:80:50:11:cb:2d:7d:ab:
+    73:8b:44:26:37
+<strong>publicExponent:</strong> 65537 (0x10001)</p>
+
+<p>注意我的粗体两个标号，我发现一个非常好的idea去处理类似的问题，可能是前辈们故意这样设计的，用脚本语言就能轻易的解决。
+think python : 就是用find函数去查找"modulus:&ldquo;字符串，然后后面就是你想要的东西了
+<strong>到底取多长？？</strong>
+1.可以计算
+2.看下一个标号，如果顺序不变，则好办了</p>
+
+<p>index1 = result.find(&ldquo;modulus:&rdquo;)
+index2 = result.find(&ldquo;publicExponent:&rdquo;)</p>
+
+<p>这样差值就是你要的东西了。</p>
+
+<p>当然差值取出来的字符串，中间还是有很多的 \n \t space
+这是必须去掉的，而且根据输出
+    00:be:30:36:c1:63:35:a2:02:dd:f8:83:86:f5:e4:
+    ef:a2:75:9f:02:56:94:ba:a5:dc:76:59:1b:b6:4c:
+    3e:80:1b:10:c0:c6:d4:8f:0d:85:1c:81:25:21:5d:
+    19:56:bd:f3:74:17:a4:5e:80:50:11:cb:2d:7d:ab:
+    73:8b:44:26:37</p>
+
+<h3><strong>可以用字符串的split(分隔符":&ldquo;&rdquo;)来轻松解决!!!perfect!!!!</strong></h3>
+
+<pre><code>def remove_redundent(s):
+    l = []
+    for ch in s:
+        if ch != " " and ch != "\n":
+            l.append(ch)
+    s = "".join(l)
+    #print s
+    l = s.split(":")
+    #remove redundent 0x00
+    if len(l) &gt; keylength/8:
+        del l[0]
+    #print l
+    return l
+</code></pre>
+
+<p>至于反转嘛，l = l[::-1] 这样</p>
+
+<p><strong>全部30几行代码如下,大家可以直接用，以后用openssl取数，再也不用手工咯~</strong></p>
+
+<pre><code>import os, re
+import sys
+
+def execCmd(cmd):  
+    r = os.popen(cmd)  
+    text = r.read()  
+    r.close()  
+    return text
+
+def reverse_list(l):
+    #print "reverse"
+    l = l.split(":")
+    l = l[::-1]
+    return l
+
+
+#command line input
+if len(sys.argv) &lt; 2:
+    print "error"
+    exit(1)
+
+keylength = int(sys.argv[1])
+
+#openssl command
+cmd = "openssl genrsa -out key" + str(keylength) + ".pem " + str(keylength)
+execCmd(cmd)
+cmd = "openssl rsa -in key" + str(keylength) + ".pem -noout -text"  
+result = execCmd(cmd)
+print result
+
+
+
+def remove_redundent(s):
+    l = []
+    for ch in s:
+        if ch != " " and ch != "\n":
+            l.append(ch)
+    s = "".join(l)
+    #print s
+    l = s.split(":")
+    #remove redundent 0x00
+    if len(l) &gt; keylength/8:
+        del l[0]
+    #print l
+    return l
+
+
+
+#fetch modulus &amp; privateExponent
+#fetch modulus:
+index1 = result.find("modulus:")
+index2 = result.find("publicExponent:")
+s = result[index1+8:index2]
+l = remove_redundent(s)
+l = l[::-1]
+print "modulus:"
+for i in range(len(l)):
+    l[i] = "0x"+l[i]+","
+print "".join(l)
+print ""
+print ""
+
+
+#fetch privateExponent:
+index1 = result.find("privateExponent:")
+index2 = result.find("prime1:")
+s = result[index1+16:index2]
+l = remove_redundent(s)
+l = l[::-1]
+print "privateExponent:"
+for i in range(len(l)):
+    l[i] = "0x"+l[i]+","
+print "".join(l)
+print ""
+print ""
+</code></pre>

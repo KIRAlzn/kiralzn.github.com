@@ -7,8 +7,8 @@
 	<meta name="author" content="KIRAlzn">
 
 	
-	<meta name="description" content="Deep Understand Oo Object Model Lession 1 玩转oo对象模型(1) 之 初窥c++对象模型 copyright: KIRAlzn
-自我介绍: USTC研一学生，目前在intel pccg department实习，研发岗 第二篇来了，这次篇幅不能那么长了， &hellip;">
+	<meta name="description" content="Think Python Fetch Openssls String Output think python:fetch openssl&rsquo;s string output copyright: KIRAlzn
+自我介绍: USTC研一学生，目前在intel pccg &hellip;">
 	
 
   <!-- http://t.co/dKP3o1e -->
@@ -100,294 +100,229 @@
   
 
 
-<time datetime="2014-08-14T00:00:00+08:00" data-updated="true" itemprop="datePublished"></time></div>
+<time datetime="2014-08-17T00:00:00+08:00" data-updated="true" itemprop="datePublished"></time></div>
 		<div class="tags">
 
 </div>
 		
 	</div>
-	<h1 class="title" itemprop="name"><a href="/blog/2014/08/14/deep-understand-oo-object-model-lession-1/" itemprop="url">Deep Understand Oo Object Model Lession 1</a></h1>
+	<h1 class="title" itemprop="name"><a href="/blog/2014/08/17/think-python-fetch-openssls-string-output/" itemprop="url">Think Python Fetch Openssls String Output</a></h1>
 	<div class="entry-content" itemprop="articleBody">
-		<h2>玩转oo对象模型(1) 之 初窥c++对象模型</h2>
+		<h2>think python:fetch openssl&rsquo;s string output</h2>
 
 <hr />
 
-<p><strong>copyright: KIRAlzn
-自我介绍: USTC研一学生，目前在intel pccg department实习，研发岗</strong></p>
+<p><strong>copyright: KIRAlzn</strong>
+<strong>自我介绍: USTC研一学生，目前在intel pccg department实习，研发岗</strong></p>
 
 <hr />
 
-<p>第二篇来了，这次篇幅不能那么长了，得简短一点了，xixi。<strong>说好的oo对象模型，我一定能讲清楚，很久以前自己就已经写过至少5篇关于object model的文章</strong>，只是自己写着玩的，自己保存用的，怕以后忘记了，这次既然要发文章，就好好把以前的东西有条理的整理下。</p>
+<p>老大说无线充电中ptu和pru通信的固件不安全，所以要加上RSA加密，但是有以下不好办的地方：</p>
 
-<blockquote><p><strong>1.本人读过inside the c++ object model ,  effective c++ , more effective c++ , c++沉思录，c++ primer 等书
-2.编译器写过 minijava -> c 的代码生成
-3.研究过信息安全相关 所以深知c++对象模型的机理，才敢操刀 oo对象模型的相关文章。</strong></p></blockquote>
+<hr />
 
-<p>首先还是用我自己的话给 object model 下一个定义:</p>
+<p><strong>1.由于公钥和私钥都是很长，比如512，1024，1280，1536，2048等等，这么长的数据是不能放到long等辈之中的，得考虑类似unsigned char(byte)数组，大整数乘方仍然是加密算法的难点之一
+2.openssl命令输出返回整个字符串，里面有各式各样的数据，不要好fetch出你想要的，而且随着RSA长度的递增，公钥和私钥输出不止一行(每行15个byte)，当然可以根据长度计算，但是很麻烦不是吗？
+3.openssl命令输出的公钥和私钥，第一个(little ending) byte，比如 0xab , openssl就会自动多加上一个 0x00 去间隔，所以整个密钥有的时候会多出一个？怎么处理？
+4.最蛋疼的是openssl输出的字节序 和 RSA处理的字节序是反的，得反转，怎么破？首先openssl输出的每个字节是不带0x的，而且是逆序，手动去处理会疯掉的</strong></p>
 
-<p>当你用  Base* b = new Base(); 的时候，你应该考虑，此时发生了什么？考虑内存怎么样分配的? 此时是单一继承呢，还是多重继承呢？ 虚函数表应该长成什么样？ 多重继承又因为比如(微软专利:虚基类虚函数表技术)菱形多重继承导致的数据二义性问题呢？最最关键的，b指向内存中的哪里？？</p>
+<hr />
 
-<p>放心吧，这些我都会讲清楚的。但我还是喜欢一步一步深入，带我一步一步引导，不是隐刀，和dota没关系，要不写篇dota攻略吧，xixi</p>
+<p>ok，这些问题也不是什么难事，用脚本语言可以很简单的解决，要不然脚本语言就没有存储在的必要了。
+最后附录上全部30几行代码，可以直接使用哦，以后用openssl取非常大的公钥和私钥再也不要手动咯~~~</p>
 
-<p>先看一段我认为入门最好的，最有趣的小程序，可能有点毁三观(第一反应:这tm也行?怎么做到的？，高手飘过，谢谢)，不过没关系，这可以充分展示对象模型。</p>
+<hr />
 
-<p>请欣赏：深入理解oo对象模型4部曲</p>
+<p>为什么不手动去处理，看下openssl的输出就秒懂了&hellip;&hellip;&hellip;</p>
 
-<h3>1.第一部</h3>
+<p><strong>C:\Users\lzn\Desktop>python try.py 512</strong>   这个是我写的try.py，512是RSA长度，命令行参数</p>
 
-<pre><code>    #include &lt;iostream&gt;
-    using namespace std;
+<p>Private-Key: (512 bit)
+modulus:
+    00:be:30:36:c1:63:35:a2:02:dd:f8:83:86:f5:e4:
+    ef:a2:75:9f:02:56:94:ba:a5:dc:76:59:1b:b6:4c:
+    3e:80:1b:10:c0:c6:d4:8f:0d:85:1c:81:25:21:5d:
+    19:56:bd:f3:74:17:a4:5e:80:50:11:cb:2d:7d:ab:
+    73:8b:44:26:37
+publicExponent: 65537 (0x10001)
+privateExponent:
+    00:a9:7f:fe:cc:cb:c6:78:e5:65:3e:9e:ba:21:5c:
+    2f:d5:f2:4e:0c:9f:6d:5e:0b:84:38:55:a2:45:0e:
+    1e:85:bc:0d:d8:17:ab:17:8a:8e:e9:57:1d:91:ce:
+    3b:39:0e:4b:1f:6d:a6:e4:1c:7d:2d:a9:d1:ec:46:
+    87:11:bc:e3:c1
+prime1:
+    00:f5:9e:94:d3:2c:f8:05:ac:f6:93:22:df:e3:63:
+    0a:d7:7f:e8:bd:b8:59:bd:81:9b:75:17:48:48:c1:
+    50:54:33
+prime2:
+    00:c6:39:e8:c7:49:3b:ef:33:a0:47:8c:c2:ca:46:
+    44:9a:ed:f0:3f:e0:de:17:18:33:ee:05:4b:46:2c:
+    26:01:ed
+exponent1:
+    00:b0:c3:d0:fd:6d:a6:8d:87:1d:e9:64:36:d6:91:
+    87:d2:f1:75:d1:5b:e4:11:b3:3d:ea:f5:b7:8a:cc:
+    bc:ff:eb
+exponent2:
+    29:df:89:c0:af:43:ad:df:e5:f7:b7:50:5e:92:41:
+    63:c8:e7:7b:56:f1:13:47:d5:90:6e:25:dc:88:ee:
+    ee:71
+coefficient:
+    24:a6:f6:eb:d8:ce:5b:80:9d:ac:09:10:7b:b9:ad:
+    65:98:1c:29:ac:3f:ee:9b:6f:76:c3:e7:7a:02:a6:
+    fa:a1
+<strong>//上面是openssl输出的字符串</strong>
+<strong>//下面是经过我处理后的结果，可以直接粘贴到RSA算法里面，省去了不少时间</strong>
+modulus:
+0x37,0x26,0x44,0x8b,0x73,0xab,0x7d,0x2d,0xcb,0x11,0x50,0x80,0x5e,0xa4,0x17,0x74,
+0xf3,0xbd,0x56,0x19,0x5d,0x21,0x25,0x81,0x1c,0x85,0x0d,0x8f,0xd4,0xc6,0xc0,0x10,
+0x1b,0x80,0x3e,0x4c,0xb6,0x1b,0x59,0x76,0xdc,0xa5,0xba,0x94,0x56,0x02,0x9f,0x75,
+0xa2,0xef,0xe4,0xf5,0x86,0x83,0xf8,0xdd,0x02,0xa2,0x35,0x63,0xc1,0x36,0x30,0xbe,</p>
 
-    class Base{
-    public:
-        virtual void f(){cout&lt;&lt;"Base"&lt;&lt;endl;}                        
-    };
+<p>privateExponent:
+0xc1,0xe3,0xbc,0x11,0x87,0x46,0xec,0xd1,0xa9,0x2d,0x7d,0x1c,0xe4,0xa6,0x6d,0x1f,
+0x4b,0x0e,0x39,0x3b,0xce,0x91,0x1d,0x57,0xe9,0x8e,0x8a,0x17,0xab,0x17,0xd8,0x0d,
+0xbc,0x85,0x1e,0x0e,0x45,0xa2,0x55,0x38,0x84,0x0b,0x5e,0x6d,0x9f,0x0c,0x4e,0xf2,
+0xd5,0x2f,0x5c,0x21,0xba,0x9e,0x3e,0x65,0xe5,0x78,0xc6,0xcb,0xcc,0xfe,0x7f,0xa9,</p>
 
-    class Derived:public Base
-    {
-    private:
-        void f(){cout&lt;&lt;"Derived"&lt;&lt;endl;}
-    };
+<p><strong>处理完之后，可以直接生成任意长度的公钥和私钥，然后直接粘贴到byte数组里面，感觉省去了非常多繁琐的工作量，可以让计算机去做的为啥不让计算机去做呐？</strong></p>
 
-    int main()
-    {
-        Base* bp = new Derived();
-        bp-&gt;f();
-        return 0;
-    }
+<hr />
+
+<p><strong>当然，短短的30几行python我就搞定了，how to think python ？</strong></p>
+
+<hr />
+
+<p>考虑:
+1.考虑如下片段，如果要取出中间这东东，难点我上面已经总结了。
+a. 粗体00是多出来的，因为little ending结尾是字母
+b. 输出有很多行，如果是一行一行的fetch，虽然行数是能够算出来的，但是还是要拼接，非常麻烦
+c. 反转所有字节序
+d. &hellip;&hellip;
+<strong>modulus:</strong>
+    <strong>00</strong>:be:30:36:c1:63:35:a2:02:dd:f8:83:86:f5:e4:
+    ef:a2:75:9f:02:56:94:ba:a5:dc:76:59:1b:b6:4c:
+    3e:80:1b:10:c0:c6:d4:8f:0d:85:1c:81:25:21:5d:
+    19:56:bd:f3:74:17:a4:5e:80:50:11:cb:2d:7d:ab:
+    73:8b:44:26:37
+<strong>publicExponent:</strong> 65537 (0x10001)</p>
+
+<p>注意我的粗体两个标号，我发现一个非常好的idea去处理类似的问题，可能是前辈们故意这样设计的，用脚本语言就能轻易的解决。
+think python : 就是用find函数去查找&#8221;modulus:&ldquo;字符串，然后后面就是你想要的东西了
+<strong>到底取多长？？</strong>
+1.可以计算
+2.看下一个标号，如果顺序不变，则好办了</p>
+
+<p>index1 = result.find(&ldquo;modulus:&rdquo;)
+index2 = result.find(&ldquo;publicExponent:&rdquo;)</p>
+
+<p>这样差值就是你要的东西了。</p>
+
+<p>当然差值取出来的字符串，中间还是有很多的 \n \t space
+这是必须去掉的，而且根据输出
+    00:be:30:36:c1:63:35:a2:02:dd:f8:83:86:f5:e4:
+    ef:a2:75:9f:02:56:94:ba:a5:dc:76:59:1b:b6:4c:
+    3e:80:1b:10:c0:c6:d4:8f:0d:85:1c:81:25:21:5d:
+    19:56:bd:f3:74:17:a4:5e:80:50:11:cb:2d:7d:ab:
+    73:8b:44:26:37</p>
+
+<h3><strong>可以用字符串的split(分隔符&#8221;:&ldquo;&rdquo;)来轻松解决!!!perfect!!!!</strong></h3>
+
+<pre><code>def remove_redundent(s):
+    l = []
+    for ch in s:
+        if ch != " " and ch != "\n":
+            l.append(ch)
+    s = "".join(l)
+    #print s
+    l = s.split(":")
+    #remove redundent 0x00
+    if len(l) &gt; keylength/8:
+        del l[0]
+    #print l
+    return l
 </code></pre>
 
-<p>答案是什么？</p>
+<p>至于反转嘛，l = l[::-1] 这样</p>
 
-<p>毫不犹豫的回答，输出 Derived</p>
+<p><strong>全部30几行代码如下,大家可以直接用，以后用openssl取数，再也不用手工咯~</strong></p>
 
-<p>ok，答案是没问题了，这个不就是多态嘛？ 没错，就是多态，但是注意，</p>
+<pre><code>import os, re
+import sys
 
-<h4><strong>注意，我飘红的关键字，private修饰的fuction f()，这里好像违反了c++语法？</strong></h4>
+def execCmd(cmd):  
+    r = os.popen(cmd)  
+    text = r.read()  
+    r.close()  
+    return text
 
-<p>因为对象是不能直接访问类的private成员函数的，对不对？</p>
+def reverse_list(l):
+    #print "reverse"
+    l = l.split(":")
+    l = l[::-1]
+    return l
 
-<p>这tm也行？</p>
 
-<p>如果不深入探讨，仅仅认为就是多态而已，当然也行。。。不过打破砂锅问到底的精神还是值得赞扬的!!!!!</p>
+#command line input
+if len(sys.argv) &lt; 2:
+    print "error"
+    exit(1)
 
-<hr />
+keylength = int(sys.argv[1])
 
-<p><strong>note:
-注意，我举这个例子的更深层次的意图：这就是为什么说 多态 ，是运行期绑定？</strong></p>
+#openssl command
+cmd = "openssl genrsa -out key" + str(keylength) + ".pem " + str(keylength)
+execCmd(cmd)
+cmd = "openssl rsa -in key" + str(keylength) + ".pem -noout -text"  
+result = execCmd(cmd)
+print result
 
-<hr />
 
-<p>提前给出答案:后面有详细解释，不懂没关系。</p>
 
-<p><strong>是吧，运行期绑定，我可以负责任(写过编译器)的告诉你，编译期的时候编译器根本不知道，只有当你程序跑起来的时候，去相应位置调用了相应位置的函数指针，才知道你到底运行的是什么函数，so，运行期(动态)绑定就是这个原因!</strong></p>
+def remove_redundent(s):
+    l = []
+    for ch in s:
+        if ch != " " and ch != "\n":
+            l.append(ch)
+    s = "".join(l)
+    #print s
+    l = s.split(":")
+    #remove redundent 0x00
+    if len(l) &gt; keylength/8:
+        del l[0]
+    #print l
+    return l
 
-<p>好吧，第一个程序如果还是不过瘾，请欣赏第二个程序。</p>
 
-<h3>2.第二部</h3>
 
-<pre><code>#include &lt;iostream&gt;
-using namespace std;
+#fetch modulus &amp; privateExponent
+#fetch modulus:
+index1 = result.find("modulus:")
+index2 = result.find("publicExponent:")
+s = result[index1+8:index2]
+l = remove_redundent(s)
+l = l[::-1]
+print "modulus:"
+for i in range(len(l)):
+    l[i] = "0x"+l[i]+","
+print "".join(l)
+print ""
+print ""
 
-class Base{
 
-public:
-    virtual void f(){cout&lt;&lt;"Base"&lt;&lt;endl;}
-};
-
-class Derived:public Base {
-
-private:
-     void f(){cout&lt;&lt;"Derived"&lt;&lt;endl;}
-};
-
- typedef void (*Func)();
-
-int main()
-{
-
-    Base* bp = new Derived();
-
-    Func fp = (Func)*(int*)*(int*)bp;
-
-    fp(); 
-
-    return 0;
-
-}
+#fetch privateExponent:
+index1 = result.find("privateExponent:")
+index2 = result.find("prime1:")
+s = result[index1+16:index2]
+l = remove_redundent(s)
+l = l[::-1]
+print "privateExponent:"
+for i in range(len(l)):
+    l[i] = "0x"+l[i]+","
+print "".join(l)
+print ""
+print ""
 </code></pre>
-
-<hr />
-
-<p><strong>这tm是什么？为什么fp尽然能调用bp对象模型里面的函数？这里面有什么猫腻吗？
-此时应该引发思考，bp指向的对象模型到底长成神马模样？能让 人 如此用指针摧残？</strong></p>
-
-<hr />
-
-<p>ok,如果还不过瘾，我再敲一个，更毁三观的程序，可以叫它   ->   hook虚函数表 , 不行，这样叫不准确，就叫他 object hook 吧，其实就hook了一个函数指针而已。</p>
-
-<h3>3.第三部</h3>
-
-<pre><code>#include &lt;iostream&gt;
-using namespace std;
-
-class Base{
-
-public: virtual void f(){cout&lt;&lt;"Base"&lt;&lt;endl;}
-};
-
-class Derived:public Base {
-
-private: void f(){cout&lt;&lt;"Derived"&lt;&lt;endl;}
-
-};
-
-void hookf() { cout&lt;&lt;"you are being hooked"&lt;&lt;endl; }
-
-typedef void (*Func)();
-
-int main()
-{
-
-Base* bp = new Derived();
-
-Func fp = (Func)*(int*)*(int*)bp;
-
-*fp = hookf;
-
-bp-&gt;f();
-
-return 0;
-}
-</code></pre>
-
-<p>注意，这里*fp = hookf; 是编译不通过的，因为 vtable是被编译到 .data段 ，是只读的，g++下:</p>
-
-<p>a.cpp:29:11: error: assignment of read-only location ‘* fp’</p>
-
-<p><strong>但是，在windows下，没有神马是不能修改的，比如(VirtualProtect,VirtualProtectex,修改CR0的写保护位，MDL等等)，这里不详细讨论。</strong></p>
-
-<p>所以说，如果能改，则hook一个函数指针有多么容易？？？</p>
-
-<p>如果改了之后，bp->f();输出什么，应该很明了了。</p>
-
-<h3>4.第四毁，来了，不像3一样，4是可以直接跑的，所以说，c++对象模型中。。vptr的设计。。。 -> hook 整张虚函数表</h3>
-
-<p>windows下cl.exe编译 ， linux 下 g++ 编译均可以。</p>
-
-<p>这个是我写的 <strong>监控虚函数表差异定位</strong> 时候的程序，我简化到最简。</p>
-
-<pre><code>#include &lt;iostream&gt;
-#include &lt;string.h&gt;
-#include &lt;stdlib.h&gt;
-using namespace std;
-
-void Hook_all_Vtable(int* pObjectBase);
-
-void hookfunc();
-
-class Game {
-int a;
-int b;
-string s;
-public:
-virtual void add(){cout&lt;&lt;"virtual function add() being called:0x"&lt;&lt;endl;}
-virtual void sub(){cout&lt;&lt;"virtual function sub() being called:0x"&lt;&lt;endl;}
-virtual void mul(){cout&lt;&lt;"virtual function mul() being called:0x"&lt;&lt;endl;}
-virtual void divv(){cout&lt;&lt;"virtual function div() being called:0x"&lt;&lt;endl;}
-};
-
-void hookfunc() { cout&lt;&lt;"you are being hooked."&lt;&lt;endl; }
-
-typedef void (*Func)();
-
-int main() {
-
-Game* gp = new Game();
-
-Hook_all_Vtable((int*)gp);
-
-gp-&gt;add();
-
-return 0;
-
-}
-
-void Hook_all_Vtable(int* pObjectBase)
-{
-int* allocp = (int*)calloc(1,100*sizeof(long));
-memcpy(allocp,(void*)(*pObjectBase),100*sizeof(long));
-*pObjectBase = (int)allocp;
-*allocp = (int)hookfunc;
-}
-</code></pre>
-
-<p>程序的细节，不做任何过多的解释，初窥嘛~，细节请听下回分解。</p>
-
-<p>此时，一段可以直接跑的程序出炉了。</p>
-
-<p>输出什么，相信大家很明白。</p>
-
-<hr />
-
-<p><strong>这tm就随意的就hook整张虚函数表了？？？？？？</strong></p>
-
-<p><strong>c++对象模型到底长成神马模样??</strong></p>
-
-<p><strong>是不是有点意思了？？？？？？？？？</strong></p>
-
-<p><strong>通过这段最最简单的hook虚函数表程序，大家可以发现，其实玩转c++对象模型其实不是难事，希望大家跟着我一点一点学习，我保证能解释清楚。</strong></p>
-
-<hr />
-
-<p>最后还是要总结一下下：</p>
-
-<hr />
-
-<p><strong>note：
-注意，所以这里说，c++有指针，所以可以肆意访问c++的对象模型，去hook里面的对象模型里的函数指针，比如堆溢出，对喷射等技术，所以c++对象模型在所有人都是好人的情况下，模型是完美的，是B.lippman在cfront的时候设计出来的完美模型，但是。
-所以说，java做的比较彻底，没有指针，就不让你用指针，这样你怎么去遍历java对象模型的函数指针呢？是不是变得更安全了？？？而且java还有反射机制，也是存在于java对象模型中，所以，就是java，就是不让你用指针。就用reference吧。
-but，我要说明一下：
-不要认为c++对象模型不安全就不用c++，hook函数指针，不是因为c++对象模型的设计而造成的，说白了，
-就是结构体里面有函数指针，然后函数指针被hook了，就这么简单!我们亲切的称之为 object hook
-只要你用oo，注意，不是c++能oo，但是c不能oo，其实c也能oo，很easy(自己搞vptr和vtable)
-所以，基本上，只要你用oo，就会存在函数指针，就有可能被hook，所以错不在c++，请大家明示!!! 但是c++允许指针去遍历虚函数表，这就不对了,呼呼。
-java么有指针，看，多彻底？？</strong></p>
-
-<hr />
-
-<blockquote><p>注意:c++的虚函数表，是被编译器编译到 .rodata
-段，即只读段，你是不能直接修改虚函数表里面的函数指针，当然在windows下，没有神马是不能修改的，比如(VirtualProtect,VirtualProtectex,修改CR0的写保护位，MDL等等)，但是可以修改vptr的指向，即可以hook整张虚函数表，因为vptr是在结构体里，当然看看你是分配在
-栈上，还是堆里，还是.data段咯，这些都是可以直接修改(参考第4个程序)的， .text 和 .rodata是只读的。</p></blockquote>
-
-<h2>note:</h2>
-
-<h3>这里插播一条我写的小程序，和对象模型没关系，仅供娱乐:一定要运行一下，看下输出，嘻嘻。</h3>
-
-<pre><code>#include &lt;stdio.h&gt;
-int main()
-{
-
-    int i = 0x00752065;
-    int j = 0x00766f6c;
-    short k = 0x0049;
-    printf("%s %s%s",&amp;k,&amp;j,&amp;i);
-
-    return 0;
-}
-</code></pre>
-
-<p>note：</p>
-
-<blockquote><p><strong>由以上语言，当年一起开发c编译器和unix的男银最后得了图灵奖，但是c++这么庞大编译器的男银却没有得图灵奖，这是又说明了神马？？</strong></p>
-
-<p><strong>(又想到了特洛伊木马，有兴趣的童鞋可以自行去了解，蛋生鸡鸡生蛋的问题，得想清楚呦)</strong></p>
-
-<p><strong>各位看官有自己的观点，是吧。</strong></p></blockquote>
-
-<p>当然第一篇，只是随便谈谈c++对象模型的一些有意思的东西，并没有具体分析，因为初窥嘛，以后会讲清楚的，请关注我呦。</p>
-
-<p>请关注下一篇，谢谢。</p>
 
 		
 		
@@ -410,20 +345,20 @@ int main()
   
 
 
-<time datetime="2014-08-14T00:00:00+08:00" data-updated="true" itemprop="datePublished"></time></div>
+<time datetime="2014-08-17T00:00:00+08:00" data-updated="true" itemprop="datePublished"></time></div>
 		<div class="tags">
 
 </div>
 		
 	</div>
-	<h1 class="title" itemprop="name"><a href="/blog/2014/08/14/compiler-and-naturelanguageprocessing/" itemprop="url">Compiler and Naturelanguageprocessing</a></h1>
+	<h1 class="title" itemprop="name"><a href="/blog/2014/08/17/complier-and-naturelanguageprocessing/" itemprop="url">Complier and Naturelanguageprocessing</a></h1>
 	<div class="entry-content" itemprop="articleBody">
-		<h1>笑谈 编译器 &amp; 自然语言处理</h1>
+		<h1>编译器perspective &amp; 自然语言处理</h1>
 
 <hr />
 
-<p><strong>copyright: KIRAlzn
-自我介绍:  USTC intel pccg department，目前在intel pccg department实习，研发岗</strong></p>
+<p><strong>copyright: KIRAlzn</strong>
+<strong>自我介绍:  USTC研一学生，目前在intel pccg department实习，研发岗</strong></p>
 
 <hr />
 
@@ -1164,6 +1099,326 @@ int main()
 <p>以后的文章我会陆续解释。</p>
 
 <h3><strong>其实学完编译器的真正效果，就是你看到上面的c，能想到，其实它就是神马。。。</strong></h3>
+
+		
+		
+	</div>
+
+</article>
+
+
+    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-08-17T00:00:00+08:00" data-updated="true" itemprop="datePublished"></time></div>
+		<div class="tags">
+
+</div>
+		
+	</div>
+	<h1 class="title" itemprop="name"><a href="/blog/2014/08/17/compilers-perspective-oo-object-model-lession-1/" itemprop="url">Compilers Perspective Oo Object Model Lession 1</a></h1>
+	<div class="entry-content" itemprop="articleBody">
+		<h2>compiler&rsquo;s perspective:</h2>
+
+<h2>玩转oo对象模型(1) 之 初窥c++对象模型</h2>
+
+<hr />
+
+<p><strong>copyright: KIRAlzn</strong>
+<strong>自我介绍: USTC研一学生，目前在intel pccg department实习，研发岗</strong></p>
+
+<hr />
+
+<p>第二篇来了，这次篇幅不能那么长了，得简短一点了，xixi。<strong>说好的oo对象模型，我一定能讲清楚，很久以前自己就已经写过至少5篇关于object model的文章</strong>，只是自己写着玩的，自己保存用的，怕以后忘记了，这次既然要发文章，就好好把以前的东西有条理的整理下。</p>
+
+<blockquote><p><strong>1.本人读过inside the c++ object model ,  effective c++ , more effective c++ , c++沉思录，c++ primer 等书</strong>
+<strong>2.编译器写过 minijava -> c 的代码生成,用prefix算法设计过java->c的对象模型存储，包括最难的minijava->x86的直接生成，意味用最低级的x86去直接模拟高度封装的java</strong>
+<strong>3.研究过信息安全相关 所以深知c++对象模型的机理，才敢操刀 oo对象模型的相关文章。</strong></p></blockquote>
+
+<p>首先还是用我自己的话给 object model 下一个定义:</p>
+
+<p>当你用  Base* b = new Base(); 的时候，你应该考虑，此时发生了什么？考虑内存怎么样分配的? 此时是单一继承呢，还是多重继承呢？ 虚函数表应该长成什么样？ 多重继承又因为比如(微软专利:虚基类虚函数表技术)菱形多重继承导致的数据二义性问题呢？最最关键的，b指向内存中的哪里？？</p>
+
+<p>放心吧，这些我都会讲清楚的。但我还是喜欢一步一步深入，带我一步一步引导，不是隐刀，和dota没关系，要不写篇dota攻略吧，xixi</p>
+
+<p>先看一段我认为入门最好的，最有趣的小程序，可能有点毁三观(第一反应:这tm也行?怎么做到的？，高手飘过，谢谢)，不过没关系，这可以充分展示对象模型。</p>
+
+<p><strong>请欣赏：深入理解oo对象模型4部曲</strong></p>
+
+<hr />
+
+<h3>1.第一部</h3>
+
+<pre><code>    #include &lt;iostream&gt;
+    using namespace std;
+
+    class Base{
+    public:
+        virtual void f(){cout&lt;&lt;"Base"&lt;&lt;endl;}                        
+    };
+
+    class Derived:public Base
+    {
+    private:
+        void f(){cout&lt;&lt;"Derived"&lt;&lt;endl;}
+    };
+
+    int main()
+    {
+        Base* bp = new Derived();
+        bp-&gt;f();
+        return 0;
+    }
+</code></pre>
+
+<p>答案是什么？</p>
+
+<p>毫不犹豫的回答，输出 Derived</p>
+
+<p>ok，答案是没问题了，这个不就是多态嘛？ 没错，就是多态，但是注意，</p>
+
+<h4><strong>注意，我飘红的关键字，private修饰的fuction f()，这里好像违反了c++语法？</strong></h4>
+
+<p>因为对象是不能直接访问类的private成员函数的，对不对？</p>
+
+<p>这tm也行？</p>
+
+<p>如果不深入探讨，仅仅认为就是多态而已，当然也行。。。不过打破砂锅问到底的精神还是值得赞扬的!!!!!</p>
+
+<hr />
+
+<p><strong>note:
+注意，我举这个例子的更深层次的意图：这就是为什么说 多态 ，是运行期绑定？</strong></p>
+
+<hr />
+
+<p>提前给出答案:后面有详细解释，不懂没关系。</p>
+
+<p><strong>是吧，运行期绑定，我可以负责任(写过编译器)的告诉你，编译期的时候编译器根本不知道，只有当你程序跑起来的时候，去相应位置调用了相应位置的函数指针，才知道你到底运行的是什么函数，so，运行期(动态)绑定就是这个原因!</strong></p>
+
+<p>好吧，第一个程序如果还是不过瘾，请欣赏第二个程序。</p>
+
+<hr />
+
+<h3>2.第二部</h3>
+
+<pre><code>#include &lt;iostream&gt;
+using namespace std;
+
+class Base{
+
+public:
+    virtual void f(){cout&lt;&lt;"Base"&lt;&lt;endl;}
+};
+
+class Derived:public Base {
+
+private:
+     void f(){cout&lt;&lt;"Derived"&lt;&lt;endl;}
+};
+
+ typedef void (*Func)();
+
+int main()
+{
+
+    Base* bp = new Derived();
+
+    Func fp = (Func)*(int*)*(int*)bp;
+
+    fp(); 
+
+    return 0;
+
+}
+</code></pre>
+
+<hr />
+
+<p><strong>这tm是什么？为什么fp尽然能调用bp对象模型里面的函数？这里面有什么猫腻吗？
+此时应该引发思考，bp指向的对象模型到底长成神马模样？能让 人 如此用指针摧残？</strong></p>
+
+<hr />
+
+<p>ok,如果还不过瘾，我再敲一个，更毁三观的程序，可以叫它   ->   hook虚函数表 , 不行，这样叫不准确，就叫他 object hook 吧，其实就hook了一个函数指针而已。</p>
+
+<hr />
+
+<h3>3.第三部</h3>
+
+<pre><code>#include &lt;iostream&gt;
+using namespace std;
+
+class Base{
+
+public: virtual void f(){cout&lt;&lt;"Base"&lt;&lt;endl;}
+};
+
+class Derived:public Base {
+
+private: void f(){cout&lt;&lt;"Derived"&lt;&lt;endl;}
+
+};
+
+void hookf() { cout&lt;&lt;"you are being hooked"&lt;&lt;endl; }
+
+typedef void (*Func)();
+
+int main()
+{
+
+Base* bp = new Derived();
+
+Func fp = (Func)*(int*)*(int*)bp;
+
+*fp = hookf;
+
+bp-&gt;f();
+
+return 0;
+}
+</code></pre>
+
+<p>注意，这里*fp = hookf; 是编译不通过的，因为 vtable是被编译到 .data段 ，是只读的，g++下:</p>
+
+<p>a.cpp:29:11: error: assignment of read-only location ‘* fp’</p>
+
+<p><strong>但是，在windows下，没有神马是不能修改的，比如(VirtualProtect,VirtualProtectex,修改CR0的写保护位，MDL等等)，这里不详细讨论。</strong></p>
+
+<p>所以说，如果能改，则hook一个函数指针有多么容易？？？</p>
+
+<p>如果改了之后，bp->f();输出什么，应该很明了了。</p>
+
+<hr />
+
+<h3>4.第四部，来了，不像3一样，4是可以直接跑的，所以说，c++对象模型中。。vptr的设计。。。 -> hook 整张虚函数表</h3>
+
+<p>windows下cl.exe编译 ， linux 下 g++ 编译均可以。</p>
+
+<p>这个是我写的 <strong>监控虚函数表差异定位</strong> 时候的程序，我简化到最简。</p>
+
+<pre><code>#include &lt;iostream&gt;
+#include &lt;string.h&gt;
+#include &lt;stdlib.h&gt;
+using namespace std;
+
+void Hook_all_Vtable(int* pObjectBase);
+
+void hookfunc();
+
+class Game {
+int a;
+int b;
+string s;
+public:
+virtual void add(){cout&lt;&lt;"virtual function add() being called:0x"&lt;&lt;endl;}
+virtual void sub(){cout&lt;&lt;"virtual function sub() being called:0x"&lt;&lt;endl;}
+virtual void mul(){cout&lt;&lt;"virtual function mul() being called:0x"&lt;&lt;endl;}
+virtual void divv(){cout&lt;&lt;"virtual function div() being called:0x"&lt;&lt;endl;}
+};
+
+void hookfunc() { cout&lt;&lt;"you are being hooked."&lt;&lt;endl; }
+
+typedef void (*Func)();
+
+int main() {
+
+Game* gp = new Game();
+
+Hook_all_Vtable((int*)gp);
+
+gp-&gt;add();
+
+return 0;
+
+}
+
+void Hook_all_Vtable(int* pObjectBase)
+{
+int* allocp = (int*)calloc(1,100*sizeof(long));
+memcpy(allocp,(void*)(*pObjectBase),100*sizeof(long));
+*pObjectBase = (int)allocp;
+*allocp = (int)hookfunc;
+}
+</code></pre>
+
+<p>程序的细节，不做任何过多的解释，初窥嘛~，细节请听下回分解。</p>
+
+<p>此时，一段可以直接跑的程序出炉了。</p>
+
+<p>输出什么，相信大家很明白。</p>
+
+<hr />
+
+<p><strong>这tm就随意的就hook整张虚函数表了？？？？？？</strong></p>
+
+<p><strong>c++对象模型到底长成神马模样??</strong></p>
+
+<p><strong>是不是有点意思了？？？？？？？？？</strong></p>
+
+<p><strong>通过这段最最简单的hook虚函数表程序，大家可以发现，其实玩转c++对象模型其实不是难事，希望大家跟着我一点一点学习，我保证能解释清楚。</strong></p>
+
+<hr />
+
+<p>最后还是要总结一下下：</p>
+
+<hr />
+
+<p><strong>note：
+注意，所以这里说，c++有指针，所以可以肆意访问c++的对象模型，去hook里面的对象模型里的函数指针，比如堆溢出，对喷射等技术，所以c++对象模型在所有人都是好人的情况下，模型是完美的，是B.lippman在cfront的时候设计出来的完美模型，但是。
+所以说，java做的比较彻底，没有指针，就不让你用指针，这样你怎么去遍历java对象模型的函数指针呢？是不是变得更安全了？？？而且java还有反射机制，也是存在于java对象模型中，所以，就是java，就是不让你用指针。就用reference吧。
+but，我要说明一下：
+不要认为c++对象模型不安全就不用c++，hook函数指针，不是因为c++对象模型的设计而造成的，说白了，
+就是结构体里面有函数指针，然后函数指针被hook了，就这么简单!我们亲切的称之为 object hook
+只要你用oo，注意，不是c++能oo，但是c不能oo，其实c也能oo，很easy(自己搞vptr和vtable)
+所以，基本上，只要你用oo，就会存在函数指针，就有可能被hook，所以错不在c++，请大家明示!!! 但是c++允许指针去遍历虚函数表，这就不对了,呼呼。
+java么有指针，看，多彻底？？</strong></p>
+
+<hr />
+
+<blockquote><p>注意:c++的虚函数表，是被编译器编译到 .rodata
+段，即只读段，你是不能直接修改虚函数表里面的函数指针，当然在windows下，没有神马是不能修改的，比如(VirtualProtect,VirtualProtectex,修改CR0的写保护位，MDL等等)，但是可以修改vptr的指向，即可以hook整张虚函数表，因为vptr是在结构体里，当然看看你是分配在
+栈上，还是堆里，还是.data段咯，这些都是可以直接修改(参考第4个程序)的， .text 和 .rodata是只读的。</p></blockquote>
+
+<h2>note:</h2>
+
+<h3>这里插播一条我写的小程序，和对象模型没关系，仅供娱乐:一定要运行一下，看下输出，嘻嘻。</h3>
+
+<pre><code>#include &lt;stdio.h&gt;
+int main()
+{
+
+    int i = 0x00752065;
+    int j = 0x00766f6c;
+    short k = 0x0049;
+    printf("%s %s%s",&amp;k,&amp;j,&amp;i);
+
+    return 0;
+}
+</code></pre>
+
+<p>note：</p>
+
+<blockquote><p><strong>由以上语言，当年一起开发c编译器和unix的男银最后得了图灵奖，但是c++这么庞大编译器的男银却没有得图灵奖，这是又说明了神马？？</strong></p>
+
+<p><strong>(又想到了特洛伊木马，有兴趣的童鞋可以自行去了解，蛋生鸡鸡生蛋的问题，得想清楚呦)</strong></p>
+
+<p><strong>各位看官有自己的观点，是吧。</strong></p></blockquote>
+
+<p>当然第一篇，只是随便谈谈c++对象模型的一些有意思的东西，并没有具体分析，因为初窥嘛，以后会讲清楚的，请关注我呦。</p>
+
+<p>请关注下一篇，谢谢。</p>
 
 		
 		
