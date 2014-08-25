@@ -3,34 +3,22 @@
   
   
   <url>
-    <loc>KIRAlzn/blog/2014/08/17/think-python-fetch-openssls-string-output/</loc>
-    <lastmod>2014-08-17T00:00:00+08:00</lastmod>
-    <priority>0.8</priority>
-  </url>
-  
-  <url>
-    <loc>KIRAlzn/blog/2014/08/17/complier-and-naturelanguageprocessing/</loc>
-    <lastmod>2014-08-17T00:00:00+08:00</lastmod>
-    <priority>0.8</priority>
-  </url>
-  
-  <url>
-    <loc>KIRAlzn/blog/2014/08/17/compilers-perspective-oo-object-model-lession-1/</loc>
-    <lastmod>2014-08-17T00:00:00+08:00</lastmod>
+    <loc>KIRAlzn/blog/2014/08/25/compiler-and-naturelanguageprocess/</loc>
+    <lastmod>2014-08-25T20:36:21+08:00</lastmod>
     <priority>0.8</priority>
   </url>
   
   
   <url>
     <loc>KIRAlzn/blog/archives/</loc>
-    <lastmod>2014-08-17T23:34:16+08:00</lastmod>
+    <lastmod>2014-08-25T20:38:23+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   
   <url>
     <loc>KIRAlzn/</loc>
-    <lastmod>2014-08-17T23:34:16+08:00</lastmod>
+    <lastmod>2014-08-25T20:38:23+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
