@@ -1,0 +1,448 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>think python fetch openssl output string - KIRAlzn夜神丶月</title>
+	<meta name="author" content="KIRAlzn">
+
+	
+	<meta name="description" content="Think Python Fetch Openssl Output String think python:fetch openssl&rsquo;s string output copyright: KIRAlzn 自我介绍: USTC研一学生，目前在intel pccg &hellip;">
+	
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<link href="/atom.xml" rel="alternate" title="KIRAlzn夜神丶月" type="application/atom+xml">
+	
+	<link rel="canonical" href="KIRAlzn/blog/2014/08/25/think-python-fetch-openssl-output-string/">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<link href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,400,700' rel='stylesheet' type='text/css'>
+	<!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+</head>
+
+
+<body>
+	<div class="container">
+		<div class="left-col">
+			<div class="intrude-less">
+			<header id="header" class="inner"><div class="profilepic">	
+	<script src="/javascripts/md5.js"></script>
+	<script type="text/javascript">
+		document.write("<img src='http://www.gravatar.com/avatar/" + MD5("443681952@qq.com") + "?s=160' alt='Profile Picture' style='width: 160px;' />");
+	</script>
+</div>
+<h1><a href="/">KIRAlzn夜神丶月</a></h1>
+<p class="subtitle">I wanna be the one you always can rely on.</p>
+<nav id="main-nav"><ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+</nav>
+<nav id="sub-nav">
+	<div class="social">
+		
+		<a class="weibo" href="http://www.weibo.com/ustc-KIRA" title="Weibo">Weibo</a>
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		<a class="rss" href="/atom.xml" title="RSS">RSS</a>
+		
+	</div>
+</nav>
+<hgroup>
+  <h1><a href="/">KIRAlzn夜神丶月</a></h1>
+  
+    <h2>I wanna be the one you always can rely on.</h2>
+  
+</hgroup>
+
+</header>				
+			</div>
+		</div>	
+		<div class="mid-col">
+			
+				
+			
+			<div class="mid-col-container">
+				<div id="content" class="inner"><article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+	<h1 class="title" itemprop="name">Think Python Fetch Openssl Output String</h1>
+	<div class="entry-content" itemprop="articleBody"><h2>think python:fetch openssl&rsquo;s string output</h2>
+
+<hr />
+
+<p><strong>copyright: KIRAlzn</strong></p>
+
+<p><strong>自我介绍: USTC研一学生，目前在intel pccg department实习，研发岗</strong></p>
+
+<hr />
+
+<p>老大说无线充电中ptu和pru通信的固件不安全，所以要加上RSA加密，但是有以下不好办的地方：</p>
+
+<hr />
+
+<p><strong>1.由于公钥和私钥都是很长，比如512，1024，1280，1536，2048等等，这么长的数据是不能放到long等辈之中的，得考虑类似unsigned char(byte)数组，大整数乘方仍然是加密算法的难点之一</strong></p>
+
+<p><strong>2.openssl命令输出返回整个字符串，里面有各式各样的数据，不要好fetch出你想要的，而且随着RSA长度的递增，公钥和私钥输出不止一行(每行15个byte)，当然可以根据长度计算，但是很麻烦不是吗？</strong></p>
+
+<p><strong>3.openssl命令输出的公钥和私钥，第一个(little ending) byte，比如 0xab , openssl就会自动多加上一个 0x00 去间隔，所以整个密钥有的时候会多出一个？怎么处理？</strong></p>
+
+<p><strong>4.最蛋疼的是openssl输出的字节序 和 RSA处理的字节序是反的，得反转，怎么破？首先openssl输出的每个字节是不带0x的，而且是逆序，手动去处理会疯掉的</strong></p>
+
+<hr />
+
+<p>ok，这些问题也不是什么难事，用脚本语言可以很简单的解决，要不然脚本语言就没有存储在的必要了。
+最后附录上全部30几行代码，可以直接使用哦，以后用openssl取非常大的公钥和私钥再也不要手动咯~~~</p>
+
+<hr />
+
+<p>为什么不手动去处理，看下openssl的输出就秒懂了&hellip;&hellip;&hellip;</p>
+
+<p><strong>C:\Users\lzn\Desktop>python try.py 512</strong>   这个是我写的try.py，512是RSA长度，命令行参数</p>
+
+<p>Private-Key: (512 bit)</p>
+
+<p>modulus:</p>
+
+<pre><code>00:be:30:36:c1:63:35:a2:02:dd:f8:83:86:f5:e4:
+ef:a2:75:9f:02:56:94:ba:a5:dc:76:59:1b:b6:4c:
+3e:80:1b:10:c0:c6:d4:8f:0d:85:1c:81:25:21:5d:
+19:56:bd:f3:74:17:a4:5e:80:50:11:cb:2d:7d:ab:
+73:8b:44:26:37
+</code></pre>
+
+<p>publicExponent: 65537 (0x10001)</p>
+
+<p>privateExponent:</p>
+
+<pre><code>00:a9:7f:fe:cc:cb:c6:78:e5:65:3e:9e:ba:21:5c:
+2f:d5:f2:4e:0c:9f:6d:5e:0b:84:38:55:a2:45:0e:
+1e:85:bc:0d:d8:17:ab:17:8a:8e:e9:57:1d:91:ce:
+3b:39:0e:4b:1f:6d:a6:e4:1c:7d:2d:a9:d1:ec:46:
+87:11:bc:e3:c1
+</code></pre>
+
+<p>prime1:</p>
+
+<pre><code>00:f5:9e:94:d3:2c:f8:05:ac:f6:93:22:df:e3:63:
+0a:d7:7f:e8:bd:b8:59:bd:81:9b:75:17:48:48:c1:
+50:54:33
+</code></pre>
+
+<p>prime2:</p>
+
+<pre><code>00:c6:39:e8:c7:49:3b:ef:33:a0:47:8c:c2:ca:46:
+44:9a:ed:f0:3f:e0:de:17:18:33:ee:05:4b:46:2c:
+26:01:ed
+</code></pre>
+
+<p>exponent1:</p>
+
+<pre><code>00:b0:c3:d0:fd:6d:a6:8d:87:1d:e9:64:36:d6:91:
+87:d2:f1:75:d1:5b:e4:11:b3:3d:ea:f5:b7:8a:cc:
+bc:ff:eb
+</code></pre>
+
+<p>exponent2:</p>
+
+<pre><code>29:df:89:c0:af:43:ad:df:e5:f7:b7:50:5e:92:41:
+63:c8:e7:7b:56:f1:13:47:d5:90:6e:25:dc:88:ee:
+ee:71
+</code></pre>
+
+<p>coefficient:</p>
+
+<pre><code>24:a6:f6:eb:d8:ce:5b:80:9d:ac:09:10:7b:b9:ad:
+65:98:1c:29:ac:3f:ee:9b:6f:76:c3:e7:7a:02:a6:
+fa:a1
+</code></pre>
+
+<p><strong>//上面是openssl输出的字符串</strong></p>
+
+<p><strong>//下面是经过我处理后的结果，可以直接粘贴到RSA算法里面，省去了不少时间</strong></p>
+
+<p>modulus:</p>
+
+<p>0x37,0x26,0x44,0x8b,0x73,0xab,0x7d,0x2d,0xcb,0x11,0x50,0x80,0x5e,0xa4,0x17,0x74,
+0xf3,0xbd,0x56,0x19,0x5d,0x21,0x25,0x81,0x1c,0x85,0x0d,0x8f,0xd4,0xc6,0xc0,0x10,
+0x1b,0x80,0x3e,0x4c,0xb6,0x1b,0x59,0x76,0xdc,0xa5,0xba,0x94,0x56,0x02,0x9f,0x75,
+0xa2,0xef,0xe4,0xf5,0x86,0x83,0xf8,0xdd,0x02,0xa2,0x35,0x63,0xc1,0x36,0x30,0xbe,</p>
+
+<p>privateExponent:</p>
+
+<p>0xc1,0xe3,0xbc,0x11,0x87,0x46,0xec,0xd1,0xa9,0x2d,0x7d,0x1c,0xe4,0xa6,0x6d,0x1f,
+0x4b,0x0e,0x39,0x3b,0xce,0x91,0x1d,0x57,0xe9,0x8e,0x8a,0x17,0xab,0x17,0xd8,0x0d,
+0xbc,0x85,0x1e,0x0e,0x45,0xa2,0x55,0x38,0x84,0x0b,0x5e,0x6d,0x9f,0x0c,0x4e,0xf2,
+0xd5,0x2f,0x5c,0x21,0xba,0x9e,0x3e,0x65,0xe5,0x78,0xc6,0xcb,0xcc,0xfe,0x7f,0xa9,</p>
+
+<p><strong>处理完之后，可以直接生成任意长度的公钥和私钥，然后直接粘贴到byte数组里面，感觉省去了非常多繁琐的工作量，可以让计算机去做的为啥不让计算机去做呐？</strong></p>
+
+<hr />
+
+<p><strong>当然，短短的30几行python我就搞定了，how to think python ？</strong></p>
+
+<hr />
+
+<p>考虑:
+1.考虑如下片段，如果要取出中间这东东，难点我上面已经总结了。
+a. 粗体00是多出来的，因为little ending结尾是字母
+b. 输出有很多行，如果是一行一行的fetch，虽然行数是能够算出来的，但是还是要拼接，非常麻烦
+c. 反转所有字节序
+d. &hellip;&hellip;</p>
+
+<p><strong>modulus:</strong>
+    <strong>00</strong>:be:30:36:c1:63:35:a2:02:dd:f8:83:86:f5:e4:
+    ef:a2:75:9f:02:56:94:ba:a5:dc:76:59:1b:b6:4c:
+    3e:80:1b:10:c0:c6:d4:8f:0d:85:1c:81:25:21:5d:
+    19:56:bd:f3:74:17:a4:5e:80:50:11:cb:2d:7d:ab:
+    73:8b:44:26:37</p>
+
+<p><strong>publicExponent:</strong> 65537 (0x10001)</p>
+
+<p>注意我的粗体两个标号，我发现一个非常好的idea去处理类似的问题，可能是前辈们故意这样设计的，用脚本语言就能轻易的解决。
+think python : 就是用find函数去查找"modulus:&ldquo;字符串，然后后面就是你想要的东西了
+<strong>到底取多长？？</strong></p>
+
+<p>1.可以计算</p>
+
+<p>2.看下一个标号，如果顺序不变，则好办了</p>
+
+<p>index1 = result.find(&ldquo;modulus:&rdquo;)
+index2 = result.find(&ldquo;publicExponent:&rdquo;)</p>
+
+<p>这样差值就是你要的东西了。</p>
+
+<p>当然差值取出来的字符串，中间还是有很多的 \n \t space
+这是必须去掉的，而且根据输出</p>
+
+<pre><code>    00:be:30:36:c1:63:35:a2:02:dd:f8:83:86:f5:e4:
+ef:a2:75:9f:02:56:94:ba:a5:dc:76:59:1b:b6:4c:
+3e:80:1b:10:c0:c6:d4:8f:0d:85:1c:81:25:21:5d:
+19:56:bd:f3:74:17:a4:5e:80:50:11:cb:2d:7d:ab:
+73:8b:44:26:37
+</code></pre>
+
+<h3><strong>可以用字符串的split(分隔符":&ldquo;&rdquo;)来轻松解决!!!perfect!!!!</strong></h3>
+
+<pre><code>def remove_redundent(s):
+    l = []
+    for ch in s:
+        if ch != " " and ch != "\n":
+            l.append(ch)
+    s = "".join(l)
+    #print s
+    l = s.split(":")
+    #remove redundent 0x00
+    if len(l) &gt; keylength/8:
+        del l[0]
+    #print l
+    return l
+</code></pre>
+
+<p>至于反转嘛，l = l[::-1] 这样</p>
+
+<p><strong>全部几十行代码如下,大家可以直接用，以后用openssl取数，再也不用手工咯~</strong></p>
+
+<pre><code>import os,re
+import subprocess
+import sys
+
+#openssl commandline
+#openssl genrsa -out key64.pem 64
+#openssl rsa -in key64.pem -noout -text
+
+#cammand
+#Usage: python pk_extract.py [-p] key64.pem
+#Usage: python pk_extract.py [-c] key64.pem 
+
+#execute command
+def execute_cmd(cmd):  
+    r = subprocess.Popen(cmd, stdout=subprocess.PIPE).stdout
+    text = r.read()  
+    r.close()  
+    return text
+
+#commandline paramater process
+from optparse import OptionParser
+optParser = OptionParser()
+optParser.add_option("-p","--privExpprint",action="store_true",dest="priv",help="optional:print privExp")
+optParser.add_option("-c","--cinvoke",action="store_true",dest="cinvoke",help="optional:specialize for c invoke")
+(options,args) = optParser.parse_args()
+
+if len(args) != 1:
+    print "Usage: pk_extract.py [OPTION] PEM_FILE"
+    print "Extract key information from the PEM file. Default behavior is extracting"
+    print "the modulus and the public exponent."
+    print ""
+    print "Options:"
+    print "  -p   extract also the private component"
+    print "  -c   output in special string form for programming use"
+    exit(1)
+
+
+pemFileName = args[0]
+
+#openssl command:fetch .pem's modulus &amp; privateExponent &amp; publicExponent
+cmd = "openssl rsa -in " + pemFileName + " -noout -text"  
+try:
+    result = execute_cmd(cmd)
+except OSError, e:
+    print &gt;&gt;sys.stderr,"Cannot execute '" + cmd + "'"
+    exit(1)
+#print result
+
+def fetch_key_length(s):
+    index1 = result.find("Private-Key")
+    #add index to ( -&gt; (x bit)
+    index1 += 14
+    index2 = result.find("bit")
+    index2 -= 1;
+    temps = s[index1:index2]
+    #print temps
+    return int(temps)
+
+#fetch keylength
+keylength = fetch_key_length(result)
+
+#configaration LINEWIDTH &amp; SHIFTWIDTH
+LINEWIDTH = 76
+SHIFTWIDTH = 4
+
+#caculate numoflinewidth
+numoflinewidth = (LINEWIDTH - SHIFTWIDTH + 1) / 6
+#print numoflinewidth
+
+def remove_redundant(s):
+    l = []
+    for ch in s:
+        if ch != " " and ch != "\n":
+            l.append(ch)
+    s = "".join(l)
+    #print s
+    l = s.split(":")
+    #remove redundant 0x00
+    if len(l) &gt; keylength/8:
+        del l[0]
+    #print l
+    return l
+
+def shiftwidth_print():
+    for i in range(SHIFTWIDTH):
+        sys.stdout.write(' ')
+
+def format_print(varName,l):
+    #for c invoke
+    if options.cinvoke:
+        print "%s:{" % varName,
+        for i in range(len(l)):
+            print "%s" % l[i],
+        print "}",
+        print ""
+        print ""
+    else:
+        print "%s %s %s[%d] = {" % ("const","DIGIT_T",varName,keylength/8)
+        shiftwidth_print()
+        tempnum = 1
+        for i in range(len(l)):
+            print "0x%s," % l[i],
+            if tempnum &gt;= numoflinewidth:
+                print ""
+                shiftwidth_print()
+                tempnum = 0
+            tempnum += 1
+        print ""
+        print "};"
+        print ""
+
+#fetch modulus &amp; publicExponent
+index1 = result.find("modulus:")
+index2 = result.find("publicExponent:")
+s = result[index1+8:index2]
+l = remove_redundant(s)
+l.reverse()
+format_print("modulus",l)
+
+if options.priv or (not(options.priv) and options.cinvoke):
+    #fetch privateExponent:
+    index1 = result.find("privateExponent:")
+    index2 = result.find("prime1:")
+    s = result[index1+16:index2]
+    l = remove_redundant(s)
+    l.reverse()
+    format_print("privExp",l)
+
+#fetch publicExponent
+index = result.find("publicExponent:")
+ch = result[index + len("publicExponent:") + 1]
+l = []
+if ch == "3":
+    l = ["03"]
+elif ch == "6":
+    l = ["01","00","01"]
+else:
+    print "unhandled publicExponent."
+    exit(1)
+format_print("pubExp",l)
+</code></pre>
+</div>
+
+</article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style addthis_16x16_style">
+	
+	<a class="addthis_button_sinaweibo"></a>
+	
+	
+	
+	
+	
+	<a class="addthis_button_compact"></a>
+	<a class="addthis_counter addthis_bubble_style"></a>
+	</div>
+  <script type="text/javascript" src="http://s7.addthis.com/js/300/addthis_widget.js#pubid="></script>
+</div>
+
+
+</div>
+			</div>
+			<footer id="footer" class="inner"><p>
+  Copyright &copy; 2014 - KIRAlzn -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+Design credit: <a href="http://shashankmehta.in/archive/2012/greyshade.html">Shashank Mehta</a></footer>
+			<script src="/javascripts/slash.js"></script>
+<script src="/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+
+
+
+
+
+		</div>
+	</div>
+</body>
+</html>
