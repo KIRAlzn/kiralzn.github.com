@@ -4,7 +4,7 @@
   <title><![CDATA[KIRAlzn夜神丶月]]></title>
   <link href="KIRAlzn/atom.xml" rel="self"/>
   <link href="KIRAlzn/"/>
-  <updated>2014-09-09T21:50:19+08:00</updated>
+  <updated>2015-01-11T15:43:44+08:00</updated>
   <id>KIRAlzn/</id>
   <author>
     <name><![CDATA[KIRAlzn]]></name>
@@ -12,6 +12,660 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Compiler Perspective Oo Object Model Lession 2]]></title>
+    <link href="KIRAlzn/blog/2015/01/11/compiler-perspective-oo-object-model-lession-2/"/>
+    <updated>2015-01-11T00:00:00+08:00</updated>
+    <id>KIRAlzn/blog/2015/01/11/compiler-perspective-oo-object-model-lession-2</id>
+    <content type="html"><![CDATA[<h2>compiler&rsquo;s perspective:</h2>
+
+<h2>玩转oo对象模型(2) 之 不懂c怎么学c++</h2>
+
+<hr />
+
+<p><strong>copyright: KIRAlzn</strong></p>
+
+<hr />
+
+<p>昨天去滑雪啊，真开心啊，感谢老天给了我一个聪明的大脑。。。2个小时就基本掌握要领，我能自由控制匀速下滑，自由刹车。。也没有人教，就是看别人滑自学的，还是挺开心的，唯一感觉内疚的就是，前2个小时太挫了，本想拉某人一把的可是自己又在半山腰的撒不住，后面会了，还想带某人一起滑的，但是我怎么找都找不到人了，然后就自己去下坡道happy去了。。。。。</p>
+
+<hr />
+
+<p>说句实话，为什么来百度实习，因为研一的时候，压力感觉很大，因为我们USTC的每一个同学实力都是不俗的。。。要想还是保持领先水平，不掉队，就必须比别人更努力。。。</p>
+
+<p>当然以前学习是为了应付考试，所以现在学习，我最多的就是喜欢问自己为什么要这样？？
+要从最根本的本质去理解事物，而不是被动的接受知识，然后背下来，不久就忘记了。。。。这样学了也是没用的。</p>
+
+<p>多问自己几个为什么？</p>
+
+<p>1.为什么要用最小二乘？？？而不用绝对值 or 最小4乘？</p>
+
+<p>是误差项满足高斯分布的一个极大似然估计咯~~~</p>
+
+<p>2.为什么计算机需要内存对齐？？
+地址为什么不连续存放，要对齐，比如，按4的倍数存放？？
+因为奇偶存储体的关系，内存可能有多个存储体，4的倍数机器，多半是4个存储体，一次启动访存，能读4个数据出来，否则读某些数据的时候，需要多次访存。。。。</p>
+
+<p>3.。。。。。。</p>
+
+<p>我写blog喜欢那种，渐入佳境的感觉，一步一步的走，不断的发起疑问，引起思考。</p>
+
+<p>而且我自认为逻辑能力还是不错哒，最喜欢看推理片了。 - -</p>
+
+<hr />
+
+<p><strong>虽然现在已经没有那个动力了，谁来给我点动力？？？督促我一下，拜托。。。</strong></p>
+
+<p><strong>好了，不扯淡了，开始写blog吧。。。</strong></p>
+
+<hr />
+
+<p>接上2篇，</p>
+
+<p><strong>compiler&rsquo;s perspective:玩转oo对象模型(1) 之 初窥c++对象模型</strong></p>
+
+<p><strong>编译器perspective &amp; 自然语言处理</strong></p>
+
+<p>我在结尾埋了伏笔，说你要懂c，就你要懂以下这些，我今天来一步一步解释一下：</p>
+
+<hr />
+
+<p><strong>要思考，编译之后，生成怎么样的x86，calling convention，prolog/epilog，caller-saved/callee-saved register，堆栈平衡，所有变量的内存分布，函数符号修饰成什么样，静态链接，动态链接，地址修正，链接指示对编译过程的影响，如dllimport,dllexport,#pragma，函数声明等等</strong></p>
+
+<hr />
+
+<p><em>先随便写段c语言，现场翻一下c语言是什么??</em></p>
+
+<p>void fun1(int a, int b)
+{
+    int temp = b;
+    b = a;
+    a = temp;   }</p>
+
+<p>void fun2(int* a, int* b)
+{
+    int temp = *b;
+    *b = *a;
+    *a = temp; }</p>
+
+<p>int fun3(int* pa, int* pb)
+{
+    int a = 3;
+    char<em> b = &ldquo;409&rdquo;;
+    int c = </em>pa + a + atoi(b);
+    return c;
+}</p>
+
+<p>int main()
+{</p>
+
+<p>   int a = 1;</p>
+
+<p>   int b = 2;</p>
+
+<p>   fun1(a,b);</p>
+
+<p>   fun2(&amp;a,&amp;b);</p>
+
+<p>   printf(&ldquo;%d&rdquo;,fun3(&amp;a,&amp;b));</p>
+
+<p>}</p>
+
+<p>ok,以上是随手写的一段c程序，但是足以解释几个指标。</p>
+
+<p>先用AT&amp;T演示一下：</p>
+
+<p>.section    .rodata</p>
+
+<p>.b:.string &ldquo;%d\n&rdquo;</p>
+
+<p>.section    .text</p>
+
+<p>fun1:</p>
+
+<pre><code>        pushl %ebp               movl  %esp,%ebp            pushl %ebx            pushl %esi            pushl %edi
+        pushl ecx
+
+        movl %ebx,12(%ebp)            movl -16(%ebp),%ebx
+        movl %ebx,8(%ebp)
+        movl 12(%ebp),%ebx
+        movl -16(%ebp),%ebx
+        movl 8(%ebp),%ebx                        addl $4,%esp            popl %edi            popl %esi            popl %ebx            popl %ebp            ret
+</code></pre>
+
+<h2>注：本次不讨论编译器优化算法，请参考上一篇</h2>
+
+<p>ok,这段c语言程序，应该是大家大一的时候，写的第一个程序，但是真的懂了吗？</p>
+
+<p>我们看fun1:</p>
+
+<p>首先</p>
+
+<p>1 . 为什么要</p>
+
+<pre><code>        pushl %ebp               movl  %esp,%ebp
+</code></pre>
+
+<p>栈真是一个好东西，没有栈，计算机无法运行</p>
+
+<p>a .栈可以支持function call中的所有过程，比如参数传递。。。</p>
+
+<p>b .只要有个栈，可以随便起线程可以随便跑(为了验证我说的对不对，结尾我会放个程序)</p>
+
+<p>。。。</p>
+
+<p>因为这个栈如linux是在 0xc000 0000处，也就是3个G的地方，其实不准确，我们讨论这个3GB的时候是假定，我们只在虚拟内存下讨论，也就是说，屏蔽了os kernel的太多细节的情况下，假设 虚拟地址->物理地址</p>
+
+<p>其实这个假设太不靠谱了，真是的情况是，(参考80386 reference manual)，作为写过os kernel的我，可以负责的告诉大家，(下次写一篇booting，即多核的机器启动过程)</p>
+
+<p>Logical Address -> Lineal Address -> Physics Address</p>
+
+<p>//    VM_USERHI,VM_STACKHI  &mdash;-> +==============================+ 0xf0000000</p>
+
+<p>//    VM_STACKLO,      +&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;+ 0xd0000000</p>
+
+<p>//    VM_SCRATCHLO, -> +&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;+ 0xc0000000</p>
+
+<p>//    VM_FILELO, &mdash;-> +&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;+ 0x80000000</p>
+
+<p>//    VM_SHARELO, &mdash;> +==============================+ 0x40000000
+//    VM_USERLO</p>
+
+<p>无语啊，从pios os里面复制出来的代码格式在markdown里面全乱了，就这样吧，我偷懒了</p>
+
+<p>看吧，VM_USERHI 和 VM_STACKHI是在3.75g的地方，也就是说最上面的虚拟内存只有256M，但是栈的位置不是准确的在 3GB下面一点点</p>
+
+<p>扯远了，fun1的汇编代码是我手动反汇编的，基本和微软的cl.exe编译器相似，为什么这样写，当然是一个是想批评微软的编译器，另一个是为了说明问题，</p>
+
+<p>栈为了支持过程调用，让不同function之间互相调用能通信，比如传一些参数，但是要知道，计算机里面没有什么高级的东西，我们只有，寄存器，内存，缓存，也就是说，只有线性地址的，东西能用，你只能用这些，像堆内存，指针，N级指针等东西，都是c给你抽象出来的，抽象程序再高一点c++ or java我就不说了。。。也就是说os kernel的开发人员，都是用裸内存的 ，你划一块这里说这里是栈，这里就是，你说这里是堆就是堆，你说这里是.data段，就是，你说是.bss就是。。。参考xv6和pios的裸内存分配算法。</p>
+
+<p>在main函数中调用了fun1，fun1怎么和main函数进行通信？？</p>
+
+<p>1 .fun1得传点东西给main  -> 参数（放到一个地方，等main去取）压栈</p>
+
+<p>2 .fun1 和 main得遵守什么样的约定，不然fun1怎么知道你main压了几个参数？？？-> calling convention 和 从右向左压栈</p>
+
+<p>3 . 对于fun1调用完成了，谁负责打扫后事？ 即压的多余的参数还在栈上，谁去清扫 -> calling convention</p>
+
+<p>嗯，先驱者们设计了神奇的规则，
+calling convention -> 有三种，1个是 __cdecl 1个是 __std 1个是fast call</p>
+
+<p>为什么要搞出3个？当然是为了支持3种不同的情况：</p>
+
+<p>先说__cdecl,其实真的大家耳熟能详了。。</p>
+
+<p>int main(int argc,char** argv)</p>
+
+<p>int main()
+为什么有的时候这样带参数可以，有的时候不带参数也对？为什么编译器能让你过？</p>
+
+<p>原因是main的调用规则是 __cdecl， (c的默认调用规则是__cdecl)</p>
+
+<p>__cdecl念做 c call， 意思是由调用者(main)去负责清扫最后参数，(清扫:从栈上删去)</p>
+
+<p>打个比方，这个比方很赞</p>
+
+<p>int main()
+{ <br/>
+  int x;
+  <strong>asm
+  {
+    mov eax, 9
+    mov dword ptr [x], eax
+  }
+  printf(&ldquo;%d\n&rdquo;,x);
+  </strong>asm
+  {
+    mov dword ptr [x], eax
+  }
+  printf(&ldquo;%d&rdquo;,x);
+  return 0;
+}</p>
+
+<p>为什么2次输出的eax值不一样呢，那次上课(计算机病毒与免疫系统)，不用多说，以我犀利的目光第一个举手抢答，然后加上了宝贵的课堂分数，当然和最后的期末98分，离不开关系。。我又催牛逼了。哈</p>
+
+<p>我就不卖关子了，因为</p>
+
+<p>caller-saved 寄存器是 eax,ecx,edx    调用者保存寄存器</p>
+
+<p>callee-saved 寄存器是 ebx,esi,edi    被调用者保存寄存器</p>
+
+<p>ps:有些人把ebp和esp归为callee-saved寄存器，不知道是什么心态。。动一下值，编译都不过的。。</p>
+
+<p>eax作为caller-saved寄存器，是由调用方，也就是main函数来负责保证它的值不被改变，so，换句话说，printf这个函数是被调用方，也就是说，不负责保存caller_saved寄存器，被调用方，只负责保存callee-saved寄存器</p>
+
+<p>ok，可能大家有点晕，没事，我再说清楚点</p>
+
+<p>在本例中，main是调用者，printf是被调用者，so，main得负责eax,ecx,edx的值不变(不变的意思是main必须得保证，在main中调用别的函数返回以后，eax的值不变，但是也可以不保护，除非你在main里面没有用到eax保存任何中间结果)
+那printf负责保护 ebx,esi,edi的值不变，换句话说，printf不负责保护eax的值，</p>
+
+<p>so，原因很明显，调用printf以后，在printf中<strong>可能</strong>改变了eax的值，所以2次main的eax值，可能不一样。</p>
+
+<p>so,如果eax保存的重要的中间值，应该怎么办的呢，说好的main要保护 eax,ecx,edx呢？？</p>
+
+<h3>main说，eax，我要保护你，怎么能让你受伤害呢？</h3>
+
+<p>main说，我只能这样了：</p>
+
+<p>push eax</p>
+
+<p>printf()</p>
+
+<p>pop eax</p>
+
+<h3>ok，交代了 caller-saved寄存器 和 callee-saved 寄存器，我也松了口气 ，继续深入。</h3>
+
+<hr />
+
+<p>main的汇编我还没写，补上，<em>(原谅我用intel语法简化，也就说有的是AT&amp;T语法，有但是intel汇编，只为说明问题，不要纠结)</em></p>
+
+<p>.globl mainmain:
+push dword ptr [b]
+push dword ptr [a]
+call fun1
+add 8,esp  <br/>
+(我们假设在32位系统下，int占4个byte，64位下其实int也占4个byte，但是long占8个，指针占8个，不能和int通用，所以写程序用long代替int是最好的了，移植到64位下不用改)</p>
+
+<p>好的，
+很明显</p>
+
+<p>1 .参数从右向左压栈，为什么从右向左，不要问我为什么，先驱约定的，注意我用词，是约定，你也可以约定从左往右，没问题，只要修改下编译器即可，这个是约定，作为写过编译器的人们，大家心里很明了</p>
+
+<p>2 .call 完 fun1之后，为什么要 add 8，esp？？？？</p>
+
+<p>这个是重中之重，这个就是 __cdecl 的来源，由调用者（main）清扫参数，
+b</p>
+
+<p>a</p>
+
+<p>return address</p>
+
+<p>|ebp</p>
+
+<p>|caller-saved register</p>
+
+<p>|&hellip;</p>
+
+<p>调用玩fun1之后，fun1的 running stack，又叫做 call stack 被销毁，return address被弹出</p>
+
+<p>只剩下</p>
+
+<p>b</p>
+
+<p>a</p>
+
+<p>所以在 __cdecl中很明显，是由main去 add 8，esp，去把这2个参数，从栈上清扫掉。</p>
+
+<p>ok，了解了 __cdecl， __stdcall 很明显了，是由被调用者， fun1去清扫参数</p>
+
+<p>即用 ret n指令，即在fun1的结尾处，用 ret 8指令，扫完参数，再回到main函数</p>
+
+<hr />
+
+<p><strong>这是2种完全不同的调用约定，</strong></p>
+
+<p><strong>注意，我反复强调，这是约定，约定。你可以任意去改，只要合理，只是现在的编译器都写好了，你不好改了，但是我们可以自己开发编译器，这不是一个很大的问题。</strong></p>
+
+<hr />
+
+<p>ok，剩下fast call也很容易了，大家肯定发现一个问题，寄存器通常比内存要快，so，用寄存器去传参数不是更快吗？对的，fast call便是解决这个问题，缺点是解决的不彻底。</p>
+
+<p>由ecx，edx作为参数约定，缺点太明显了，只能有2个参数，多一个不行。。。。坑吧。。。所以之所以成为fast call也有一层含义像是快餐一样，很少吃。</p>
+
+<h3>好的，说完fast call，我终于可以说 64位下的汇编了</h3>
+
+<p>64位下没记错应该有15个寄存器，多了好多个，一个是用来支持寄存器分配算法，另一个就是用来作为参数传递的，呵呵，<strong>把fast call的2个改为6个</strong>。。。</p>
+
+<p>明白了吧~~~~~~~</p>
+
+<hr />
+
+<h3>ok，继续深入，说完了calling convention，继续说说这段汇编</h3>
+
+<h3>考虑编译器优化算法，寄存器分配(图着色)</h3>
+
+<p>经过这个算法之后，算出live-out，不同的函数，<strong>在同一个时刻</strong>用到的寄存器的个数，32位系统下不一定正好是3个，so不一定一进函数就立刻保存这3个寄存器。。。考虑下 .text段代码爆棚的感受。。
+            pushl %ebp               movl  %esp,%ebp            pushl %ebx            pushl %esi            pushl %edi
+我记得我以前吐槽过微软的编译器，肯定没有经过寄存器分配的算法。。。搞毛线啊。。比gcc差远了，不知道现在vs2013改进了没有。。。
+经过寄存器分配算法之后，不需要用那么多的寄存器，保存起来，除了占 .text的空间，还能干什么？</p>
+
+<h2>当然 pushl %ecx是值得表扬的，以前说过，同样是开辟4个字节，pushl %ecx比 sub $4,%esp拥有更少的字节数。</h2>
+
+<p>关于 prolog/epilog
+查下英文单词的意思，也是很明显的，就是说，开场白/收场白</p>
+
+<p>也就是进入.text段的时候，这个函数标号所在地址的，函数汇编代码的起始部分 和 结束部分</p>
+
+<p>.text
+我们从os kernel角度分析一下，.text段在哪里，首先在 机器启动的开始部分，还没有打开分页，也就是说 CRO寄存器的PG位没有打开的时候，linear地址->就是物理地址，</p>
+
+<h4>也就说，此时不走页表so，在 kernel.img 里面，肯定不能把kernel的代码烧在很高的地址，虽然虚拟地址有4G（32bit），因为虚拟内存4G，但是物理内存只有1GB，你os不是照样运行的好好的吗？就是这个原因，最初的.text 和 .data ，还有 .rodata .bss .directive(这是全拼) 等等段，都是在1M-4M之前，也就是在pios os kernel保证代码和数据在3M以内，等到 os kernel 加载完毕的时候，各个部件初始化完毕的时候会</h4>
+
+<p>call main
+这个main是内核编译到高地址，如windows是编译到0x80000000这里，linux是0xc0000000</p>
+
+<h4>之后都是走页表，把高的虚拟地址，映射到物理地址打住，此时不是在讨论os kernelok，.text段里面有很多代码，是代码段，整个编译器编译的代码都在 .text段</h4>
+
+<p>so，你这个fun1也在代码段是吧。fun1其实只是一个标号，代表着一个地址，也就是 fun1 的代码在哪里，ok，进入代码的时候，你需要在</p>
+
+<h4>内存栈(又称为硬件栈)，上弄一块自己的地盘，就是所谓的 call stack frame，栈桢</h4>
+
+<p>通过 不断压入ebp，形成一个硬件的链表，
+在制作游戏外挂的时候，可以截获任意一个栈桢，截获其返回地址，然后就可以干坏事了。。
+so，反外挂怎么样检测？？？？
+只有扫 ebp链 了，但是扫 ebp链真的有用吗？ 明显是不行的，因为有隐藏栈桢技术，我以前写过完整代码，有兴趣的同学可以私密我。
+so，prolog/epilog 就是在栈上划分一块地盘用的，给某个函数用， 栈桢头/栈桢尾&mdash;&mdash;&mdash;-</p>
+
+<h4>关于 函数符号修饰成什么样？</h4>
+
+<p>不需要太深入了解了，不搞信息安全的基本不需要知道，我就简单说下以fun为例：
+__cdecl     : <em>fun
+__stdcall:    </em>fun@8
+__fastcall:   @fun@8<strong>知道这个有什么用呢？</strong>
+#pragma的时候有用，假设是 std call你写 #pragma comment(linker, &ldquo;/EXPORT:_fun@8&rdquo;)，</p>
+
+<h4>在双引号里面必须得是 编译器修饰过的 名字，因为这个是给链接器看的。</h4>
+
+<p>有兴趣的我可以写在下一篇blog里面。&mdash;&mdash;&mdash;-</p>
+
+<h4>关于 静态链接，动态链接，地址修正，链接指示对编译过程的影响，如dllimport,dllexport,#pragma，函数声明 感觉要写个1w字才罢休啊。。放在下一篇吧。</h4>
+
+<hr />
+
+<h4>关于所有变量的内存分布，有了这个概念，反汇编起来真是easy</h4>
+
+<p>为什么我能轻易反汇编？
+void fun1(int a, int b)</p>
+
+<p>{
+    int temp = b;
+    b = a;
+    a = temp;   }</p>
+
+<p>int x = 3;</p>
+
+<p>int v;</p>
+
+<p>main()</p>
+
+<p>{
+  int a = 1;
+  int b = 2;
+  fun1(a,b);
+}ok,我就详细解释一遍，看下 fun1的栈桢
+b
+a
+return address
+|ebp          &lt;-ebp寄存器指向（前面加上了 <strong>|</strong>  表示是fun1的栈桢区域，没有别的意思）
+|ebx
+|esi
+|edi
+|temp
+|&hellip;. 编译器算法计算local variables占多少个字节之后，sub 减去一段空间来放置，然后就是多加一些空间支持
+|&hellip;.过程调用，我从 CSAPP里面学的，这样在编译器生成自我调用的汇编代码的时候很方便，栈桢不会crash
+很明显，
+return address 在 ebp+4的位置a 在 ebp+8 的位置
+b 在 ebp+12的位置
+接下里就是 callee-saved寄存器，假设没经过寄存器分配(图着色)算法的优化，则保存全部的callee-saved寄存器
+temp -> local variable 在 ebp-16 的位置</p>
+
+<p>int x = 3;</p>
+
+<p>int v;
+对于已经初始化了的全局变量和局部静态变量，如x，是放在 .data 段
+对于没有初始化的全局变量和局部静态变量，如v，是放在 .bss 段.bss以上是pios kernel裸内存分配算法的关键好了，找到全部变量的位置，反汇编还不容易吗？？</p>
+
+<h4>顺便提一句，对于x86，同是内存操作对于mov指令是不行的，需要经过寄存器转换。</h4>
+
+<hr />
+
+<h1>关于fun1的语义</h1>
+
+<p><strong>以前大一的时候，老师都教说，哦，fun1这里a，b是形参，他们交换是不改变调用时候的a，b的值的，
+高级一点的老师会说，哦，这里是 pass by value，所以在fun1形参的时候是副本</strong></p>
+
+<h1>听起来好像很有道理，其实都是扯淡，怎么能说服自己？</h1>
+
+<p>拿事实说话，所谓的pass by value，传的是副本，话是没错啦，其实比如 a=1 b=2，就把它的值copy一份，压到栈上，然后给他们起个名字，再叫做a，b，其实没用，a和b指向的地址根本变的一塌糊涂了，都是指在fun1栈桢里面的位置了，再也不是main栈桢里面的的那两个地址了。</p>
+
+<p>a 在 ebp+8 的位置
+b 在 ebp+12的位置</p>
+
+<p>所以你再在fun1的栈桢里面做什么小动作，main栈桢里面的a，b值能变吗？？？
+这个就是所谓的 pass by value</p>
+
+<p>pass by reference 呢？</p>
+
+<h2>栈上放的是指针呦，直接去访存了，访问main的栈桢里面的位置了。。。当然会变了。。。。。。。</h2>
+
+<h4>关于返回值</h4>
+
+<p>返回值，约定，放到 eax里面，这就是为什么c语言中，返回值只能是一个值，你要是想反回多个值，只能创建一块内存，然后往里面塞，然后返回这块内存的地址</p>
+
+<hr />
+
+<h4>关于指针， inline函数</h4>
+
+<p>说道指针，不得不提一下  inline 函数，记得有些书本里面把inline函数，翻译成 <strong>在线函数</strong>，也不知道翻译者的心态是神马。。。。。。。所谓inline就是一些小的函数，编译的时候，把代码直接编译过来，省去的函数调用的开销。</p>
+
+<h4>能省去多少开销？？</h4>
+
+<p>csapp里面说的很清楚，一般 函数调用需要 10 - 12个 cpu的cycle，时钟周期。
+所以如果代码量很小的情况下，小于10个时钟周期，<strong>那就是赚了？？</strong></p>
+
+<h4>真的赚了吗？？</h4>
+
+<p>不一定的，如果函数调用太频繁了，也不需要统计学的博士来告诉你，代码段会爆棚吧，相当于一个宏了，编译器，见到函数调用的地方，就给变成代码替换，调用100w次，就替换100w次，会爆棚吧？？</p>
+
+<h4>神马情况下编译器不接受inline申请？？</h4>
+
+<p>你在函数前面写个inline，只是向编译器申请，意思是大哥，这个我想inline，你看行不行？？</p>
+
+<h4>编译器有权利拒绝你的申请，</h4>
+
+<p>编译器会说，哥用算法看下你到底小不小，到底和函数调用比起来，10个cpu时钟周期到底该不该剩下来？？？
+神马情况下会拒绝？？？
+2种情况：
+1 .用函数指针调用的时候 -> 你都用函数指针调用了，说明你函数体必须存在于内存中，得有指针指向它，不然怎么调用？</p>
+
+<h2>2 .多态 -> 同函数指针</h2>
+
+<h4>关于c语言的异常， 穷人异常: setjump longjump</h4>
+
+<p>setjump相当于给当时的栈桢给一个快照，咔嚓，一声，把此时的栈桢给照下来，下次longjump的时候直接返回回来，
+当然我们做编译器的时候有2种，一个是异常栈，一个是异常表，两种实现方式，
+异常栈 -> 每次try都会压一个frame，嵌套异常就能直接返回到上一个frame的位置，优点是，当发生异常的时候，返回速度巨快，缺点很明显，代码不是全速运行，每到一个try，都要压一个frame</p>
+
+<h4>so，基于以上原因，adobe公司，10年禁止使用异常也不是不无道理</h4>
+
+<h2>异常表 -> 哇，好牛逼的东西，如果代码不发生异常，代码是全速运行，叫做pay as u go，你出错了，我才惩罚你，才要钱，缺点也很明显，就是如果真的发生异常了，那就需要  unwind frame了。。。。注意我的用词 unwind，很慢，很慢。。</h2>
+
+<h4>ok，撤了这么久的c语言，来深究一下c++吧，我好累。</h4>
+
+<p>上面的代码我埋了一个很深的伏笔，可能读者已经发现了，我写了 fun1,fun2,fun3这种 ugly的名字，没有办法，c语言就是这样，同一类的函数，必须取不同的名字，当然你可以优化下名字之类的，
+<strong>但是，c++看到了这个缺点：</strong>
+引入<strong>函数重载</strong>去解决这个问题
+更进一步的，既然要解决这种ugly的命名问题，
+<strong>c++又引入：</strong>函数<strong>形参默认值，模板，命名空间</strong>去更进一步解决。</p>
+
+<p>命名空间:让第三方的库也可以多取一些名字，比如你的库里有max，我就不能取了？？？负责同一个名字，编译器是编译不过的。
+其他两个同理。</p>
+
+<h4>都是为了让函数的名字尽量变少####为什么要让函数的名字变少，除了命名起来的ugly的原因，还有什么？？？？</h4>
+
+<p>那就是在很久以前，c的库都已经写好了，比如微软的 printf malloc calloc &hellip;
+(####这里涉及到动态链接的知识，太复杂，一时半会说不清楚，下次吧)
+然后你的代码里是需要调用 printf的吧？还有很多其他函数？命名是有冲突的吧？？</p>
+
+<h4>所以其根本原因是什么呢？？？就是减少已经编译好的模块obj中的命名冲突!!!!!为什么？？因为已经写好的库太多了，里面的函数名字，都在符号表里面，意味着，已经申请过了，你不能再用，你要是再用，编译器就编译不过了。。。明白了吗</h4>
+
+<p>&mdash;&mdash;&mdash;-####好的，其实接上面，还有多态，有异曲同工之妙
+void fun(BASE* b);
+一个base的指针作为参数，可以接受其所有子孙儿女的对象指针，意味着又简化了代码不是吗，否则，传不同的指针，又需要多写几个函数？？？
+&mdash;&mdash;&mdash;-#### ok,看下编程语言的演化过程
+汇编->c->c++->java 其他语言不考虑。
+当初老外用汇编写代码的时候，因为那个时候内存也小，所以写代码特别注重省内存和效率，后来老外们发现，用汇编语言写代码太费劲了。尤其是写大型的软件
+第一版本的unix是用汇编写的，坑的要死啊，每天改bug的速度==引进新bug的数目。。。。。
+所以老外发明了c语言，因为c是对x86的浅封装，写一条c能少写几条汇编，因为从汇编开始写代码的人，都心里无比知道内存分配，知道写一条c，对应哪些汇编。</p>
+
+<h4>这个过程就是所谓的抽象人们当时把c称作高级语言。。。。。</h4>
+
+<p>后来为什么引进c++？一个是为了解决c的某些坑，一个是c++抽象的思想，让人写代码的时候更注重人的抽象，写出来的代码能更让人看懂，至于计算机能不能看懂，交给编译器去解决。
+面向对象的好处还有就是 用了设计模式之后，对代码的可维护性，扩展性，灵活性有了很大的提升</p>
+
+<h1>因为需求总是在变的，作为coder要知道，我让你变，你变了之后，哥的代码就只变一点点，你以为会让我推翻重写吗？？太天真了。</h1>
+
+<h2>&mdash;&mdash;&mdash;-#好了，我累死了。。。关于c c++ java 的演化过程，就下次再写吧。。。</h2>
+
+<p>结尾还是要点金一下哒。。。我上病毒课以前写的一段程序送给大家。。。
+能完全完全看懂这个，基本干信息安全没问题了</p>
+
+<h2>以下代码是两个函数在 .text段来回迭代，然后计算fibnaci序列的代码</h2>
+
+<p>#include &lt;stdio.h></p>
+
+<p>int count;</p>
+
+<p>struct ctx
+{
+  int eip, esp, ebx, ebp, v;
+} M, A, B;</p>
+
+<p><strong>declspec(naked) void swtch(struct ctx *from, struct ctx *to)
+{
+    </strong>asm{</p>
+
+<pre><code>    mov eax, [esp+4]
+    pop dword ptr [eax]
+    mov [eax+4], esp
+    mov [eax+8], ebx
+    mov [eax+12], ebp
+
+    mov ecx, [esp+4]
+    mov ebp, [ecx+12]
+    mov ebx, [ecx+8]
+    mov esp, [ecx+4]
+
+    push [ecx]
+    ret
+}
+</code></pre>
+
+<p>}</p>
+
+<p>void A_proc()
+{</p>
+
+<p>__asm
+{</p>
+
+<p>fibloop1:
+    cmp dword ptr [count],1
+    je next1</p>
+
+<pre><code>dec dword ptr [count]
+
+mov esi,dword ptr [B+16]    
+add dword ptr [A+16],esi
+
+lea esi,dword ptr [B]
+push esi
+lea esi,dword ptr [A]
+push esi
+call swtch
+jmp fibloop1
+</code></pre>
+
+<p>next1:
+    mov edi,dword ptr [B+16]
+    lea esi,dword ptr [M]
+    push esi
+    lea esi,dword ptr [A]
+    push esi
+    call swtch</p>
+
+<p>}</p>
+
+<p>}
+void B_proc()
+{</p>
+
+<p>__asm{</p>
+
+<p>fibloop2:
+    cmp dword ptr [count],1
+    je next2</p>
+
+<pre><code>dec dword ptr [count]
+
+mov esi,dword ptr [A+16]   
+add dword ptr [B+16],esi
+
+
+lea esi,dword ptr [A]
+push esi
+lea esi,dword ptr [B]
+push esi
+call swtch
+
+jmp fibloop2
+</code></pre>
+
+<p>next2:
+    mov edi,dword ptr [A+16]</p>
+
+<pre><code>lea esi,dword ptr [M]
+push esi
+lea esi,dword ptr [B]
+push esi
+call swtch
+</code></pre>
+
+<p>}</p>
+
+<p>}</p>
+
+<p>int main(int argc,char** argv)
+{
+  int Astack[1024];
+  int Bstack[1024];
+  int result;</p>
+
+<p>  A.eip = (int)A_proc;
+  A.esp = (int)(&amp;Astack[1023]);
+  B.eip = (int)B_proc;
+  B.esp = (int)(&amp;Bstack[1023]);</p>
+
+<p>  A.v = 1;
+  B.v = 1;</p>
+
+<p>   if(argc &lt;= 1)
+   {
+       printf(&ldquo;please input one command line parameter(number&lt;40)&rdquo;);
+       return -1;
+   }</p>
+
+<p>  count= atoi(argv[1]);</p>
+
+<p>  if(count == 0)
+  {<br/>
+      printf(&ldquo;fib(%d) = 0\n&rdquo;,atoi(argv[1]));
+      return 0;
+  }
+  swtch(&amp;M, &amp;A);</p>
+
+<p>  __asm{
+      mov dword ptr [result],edi</p>
+
+<p>  }</p>
+
+<p>  printf(&ldquo;fib(%d) = %d\n&rdquo;,atoi(argv[1]),result);</p>
+
+<p>  return 0;
+}</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[think python fetch openssl output string]]></title>
